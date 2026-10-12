@@ -1,0 +1,994 @@
+<meta charset="utf-8">
+<title>Notch Islands Study</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Schibsted+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: the simulated MacBook display is the hero; a keycap pad sits under it, then motion knobs beside a switch log, then review questions. */
+:root{
+  --ground:#e7e8eb; --surface:#f6f6f8; --raise:#ffffff; --ink:#16171a; --muted:#5b5f69; --line:#d1d3d9;
+  --accent:#2f5bd3; --key:#fdfdfe; --key-down:#eceef2; --key-edge:#c3c6cd; --key-ink:#26282d;
+  --bezel:#0b0b0c; --bezel-edge:#c4c6cc; --shadow:rgba(20,24,40,.14); --shadow-deep:rgba(20,24,40,.45);
+  --f-display:"Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --f-mac:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#101114; --surface:#17181c; --raise:#202227; --ink:#ebecef; --muted:#9a9ea8; --line:#2a2c32;
+    --accent:#88a3ff; --key:#25272d; --key-down:#1c1d22; --key-edge:#3b3e46; --key-ink:#e3e4e8;
+    --bezel-edge:#2c2e34; --shadow:rgba(0,0,0,.4); --shadow-deep:rgba(0,0,0,.7); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#101114; --surface:#17181c; --raise:#202227; --ink:#ebecef; --muted:#9a9ea8; --line:#2a2c32;
+  --accent:#88a3ff; --key:#25272d; --key-down:#1c1d22; --key-edge:#3b3e46; --key-ink:#e3e4e8;
+  --bezel-edge:#2c2e34; --shadow:rgba(0,0,0,.4); --shadow-deep:rgba(0,0,0,.7); color-scheme:dark;
+}
+*{ box-sizing:border-box }
+body{ background:var(--ground); color:var(--ink); font:15px/1.55 var(--f-body); }
+.wrap{ max-width:1180px; margin:0 auto; padding-inline:20px; padding-block:32px 64px; display:grid; gap:22px; }
+@media (max-width:520px){ .wrap{ padding-inline:16px; padding-block:22px 48px } }
+
+.head{ display:grid; gap:6px; max-width:68ch }
+.eyebrow{ margin:0; font:500 11.5px/1.4 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted) }
+h1{ margin:0; font:700 clamp(30px,4.4vw,44px)/1.05 var(--f-display); letter-spacing:-.02em; text-wrap:balance }
+.lede{ margin:4px 0 0; color:var(--muted) }
+.lede kbd{ vertical-align:1px }
+h2{ margin:0; font:600 16px/1.3 var(--f-display); letter-spacing:-.005em }
+
+kbd{ font:500 12px/1 var(--f-mac); display:inline-block; min-width:1.8em; padding:3px 6px 4px; border:1px solid var(--key-edge); border-bottom-width:2px; border-radius:5px; background:var(--key); color:var(--key-ink); text-align:center; white-space:nowrap }
+
+/* ---------- stage (simulated display) ---------- */
+.stage{ position:relative; padding:9px; background:var(--bezel); border-radius:20px; box-shadow:0 0 0 1px var(--bezel-edge), 0 26px 50px -30px var(--shadow-deep); }
+.viewport{ position:relative; width:100%; aspect-ratio:1280/600; overflow:hidden; border-radius:10px; outline:none; background:#0d1020; cursor:default; }
+.viewport:focus-visible{ box-shadow:0 0 0 3px var(--accent) }
+.screen{ position:absolute; left:0; top:0; width:1280px; height:600px; transform-origin:0 0; overflow:hidden; font-family:var(--f-mac); --slow:1; user-select:none; -webkit-user-select:none }
+.wall{ position:absolute; inset:0 }
+.dusk .wall{ background:radial-gradient(110% 90% at 18% 8%, #2c3d72 0%, transparent 58%), radial-gradient(90% 80% at 88% 18%, #5b2c62 0%, transparent 55%), linear-gradient(160deg,#151b35,#0c0f1d 60%,#1d1430) }
+.day .wall{ background:radial-gradient(110% 80% at 14% 0%, #ffe0c2 0%, transparent 55%), radial-gradient(90% 80% at 90% 12%, #c6d9ff 0%, transparent 60%), linear-gradient(170deg,#f3eee8,#dde6f3) }
+
+.menubar{ position:absolute; left:0; top:0; width:1280px; height:34px; display:flex; justify-content:space-between; align-items:center; padding:0 16px; font-size:13px; backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px) }
+.dusk .menubar{ background:rgba(8,10,22,.38); color:#f1f2f6 }
+.day .menubar{ background:rgba(255,255,255,.5); color:#1b1c20 }
+.mb-l, .mb-r{ display:flex; align-items:center; gap:18px; white-space:nowrap }
+.mb-l{ max-width:520px; overflow:hidden }
+.mb-l b{ font-weight:700 }
+.mb-logo{ width:13px; height:13px; border-radius:4px; border:1.8px solid currentColor; flex:none }
+.mb-r{ gap:14px }
+.mb-r svg{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round }
+
+.win{ position:absolute; width:740px; height:400px; border-radius:12px; overflow:hidden; background:#1c1e24; color:#e9eaee; box-shadow:0 34px 60px -24px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.08) }
+.day .win{ background:#fbfbfc; color:#1d1e22; box-shadow:0 34px 60px -26px rgba(30,40,70,.38), 0 0 0 1px rgba(0,0,0,.08) }
+.win.front{ left:270px; top:150px }
+.win.back{ left:196px; top:112px; filter:brightness(.78) saturate(.75) }
+.day .win.back{ filter:brightness(.95) saturate(.6) }
+.win.front.swap{ animation:swap calc(180ms * var(--slow)) cubic-bezier(.2,.8,.2,1) }
+.rm .win.front.swap{ animation:none }
+@keyframes swap{ from{ opacity:.5; transform:translateY(7px) scale(.99) } to{ opacity:1; transform:none } }
+.tb{ position:relative; height:30px; display:flex; align-items:center; padding:0 12px; border-bottom:1px solid rgba(255,255,255,.06) }
+.day .tb{ border-color:rgba(0,0,0,.06) }
+.tl{ display:flex; gap:7px }
+.tl i{ width:11px; height:11px; border-radius:50%; background:#ff5f57 }
+.tl i:nth-child(2){ background:#febc2e } .tl i:nth-child(3){ background:#28c840 }
+.win.back .tl i{ background:rgba(140,140,150,.45) }
+.tt{ position:absolute; left:90px; right:90px; text-align:center; font-size:12px; font-weight:600; opacity:.72; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.wb{ display:grid; grid-template-columns:170px 1fr; height:calc(100% - 30px) }
+.side{ padding:16px 12px; display:grid; gap:10px; align-content:start; background:rgba(255,255,255,.03); border-right:1px solid rgba(255,255,255,.05) }
+.day .side{ background:rgba(0,0,0,.025); border-color:rgba(0,0,0,.05) }
+.side i{ height:8px; border-radius:4px; background:rgba(255,255,255,.09) }
+.day .side i{ background:rgba(0,0,0,.08) }
+.side i:nth-child(2n){ width:72% } .side i:nth-child(3n){ width:86% }
+.main{ padding:24px 28px; display:grid; gap:20px; align-content:start }
+.mh{ display:flex; gap:14px; align-items:center; min-width:0 }
+.mh b{ display:block; font-size:17px }
+.mh span{ font-size:12.5px; opacity:.6 }
+.ph{ display:grid; gap:11px }
+.ph i{ height:10px; border-radius:5px; background:var(--c); opacity:.28 }
+.ph i:nth-child(1){ width:88% } .ph i:nth-child(2){ width:64% } .ph i:nth-child(3){ width:76% } .ph i:nth-child(4){ width:42% } .ph i:nth-child(5){ width:70% }
+
+.scrim{ position:absolute; inset:0; background:radial-gradient(52% 150px at 50% 0, rgba(0,0,0,.26), transparent 100%); opacity:0; transition:opacity calc(160ms * var(--slow)); pointer-events:none }
+.scrim.on{ opacity:1 }
+
+/* ---------- islands ---------- */
+.layer{ position:absolute; left:0; top:-40px; width:1280px; pointer-events:none }
+#goo-layer{ height:300px }
+#goo-layer.goo{ filter:url(#goo) }
+#face-layer{ height:640px }
+.notch{ position:absolute; left:545px; top:0; width:190px; height:74px; background:#000; border-radius:0 0 14px 14px }
+.notch.virtual{ height:40px; transition:height calc(110ms * var(--slow)) cubic-bezier(.2,.9,.3,1) calc(140ms * var(--slow)) }
+.notch.virtual.on{ height:74px; transition-delay:0s }
+.qblob{ position:absolute; top:0; right:711px; width:0; height:74px; background:#000; border-radius:0 0 0 17px; transition:width calc(150ms * var(--slow)) cubic-bezier(.2,.9,.3,1.1) }
+.rm .qblob{ transition:none }
+
+.blob, .isl{ position:absolute; left:0; top:0; width:48px; height:48px; transform-origin:50% 50%; will-change:transform }
+.blob-in{ width:100%; height:100%; border-radius:50%; background:#000; transition:transform calc(110ms * var(--slow)) ease }
+.blob.sel .blob-in{ transform:scale(1.14) }
+.isl{ pointer-events:auto; cursor:pointer; opacity:0 }
+.isl.leaving{ pointer-events:none }
+.isl-in{ position:absolute; inset:0; border-radius:50%; display:grid; place-items:center; box-shadow:inset 0 0 0 1px rgba(255,255,255,.15); transition:transform calc(110ms * var(--slow)) cubic-bezier(.3,1.4,.5,1) }
+.isl.sel .isl-in{ transform:scale(1.14) }
+.ring{ position:absolute; inset:-3px; border-radius:50%; box-shadow:0 0 0 2px rgba(255,255,255,.94), 0 0 18px 3px rgba(140,170,255,.5); opacity:0; transition:opacity calc(90ms * var(--slow)) }
+.isl.sel .ring{ opacity:1 }
+.ico{ width:32px; height:32px; border-radius:22.5%; display:grid; place-items:center; flex:none; box-shadow:inset 0 0 0 .5px rgba(255,255,255,.28), 0 1px 2px rgba(0,0,0,.35) }
+.ico svg{ width:20px; height:20px; fill:none; stroke:#fff; stroke-width:2; stroke-linecap:round; stroke-linejoin:round }
+.ico.big{ width:54px; height:54px } .ico.big svg{ width:31px; height:31px }
+.ico.sm{ width:20px; height:20px; border-radius:5px } .ico.sm svg{ width:13px; height:13px; stroke-width:2.4 }
+.dots{ position:absolute; left:50%; top:calc(100% + 6px); transform:translateX(-50%); display:flex; gap:3px }
+.dots i{ width:4px; height:4px; border-radius:50%; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.6) }
+.pin-n{ position:absolute; left:-5px; top:-5px; min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:#000; color:rgba(255,255,255,.82); font:600 10px/16px var(--f-mac); text-align:center; box-shadow:0 0 0 1px rgba(255,255,255,.2); opacity:0; transition:opacity calc(120ms * var(--slow)) }
+#face-layer.tap .pin-n{ opacity:1 }
+
+.hint, .label, .more, .qtext, .winpanel{ position:absolute; left:0; top:0 }
+.hint{ left:640px; top:88px; transform:translateX(-50%); font-size:11.5px; color:rgba(255,255,255,.72); background:rgba(0,0,0,.62); padding:3px 10px; border-radius:10px; opacity:0; transition:opacity calc(120ms * var(--slow)); white-space:nowrap }
+.hint.on{ opacity:1 }
+.qtext{ left:auto; right:747px; top:57px; transform:translateY(-50%); color:#fff; font-size:13px; font-weight:500; white-space:pre; display:flex; align-items:center; gap:6px; opacity:0; transition:opacity calc(90ms * var(--slow)) }
+.qtext.on{ opacity:1 }
+.qtext svg{ width:13px; height:13px; fill:none; stroke:rgba(255,255,255,.55); stroke-width:2.2; stroke-linecap:round }
+.qtext em{ font-style:normal; color:rgba(255,255,255,.5); font-weight:400 }
+.caret{ width:1.5px; height:15px; background:#9db6ff; animation:blink 1s steps(1) infinite }
+@keyframes blink{ 50%{ opacity:0 } }
+.label{ padding:4px 10px; border-radius:11px; background:rgba(0,0,0,.84); color:#fff; font-size:12px; line-height:1.25; white-space:nowrap; display:flex; gap:7px; align-items:baseline; opacity:0; transition:opacity calc(100ms * var(--slow)), transform calc(120ms * var(--slow)) cubic-bezier(.2,.8,.2,1) }
+.label b{ font-weight:600 } .label span{ color:rgba(255,255,255,.6) }
+.label.on{ opacity:1 }
+.more{ font-size:11px; font-weight:600; color:#fff; background:#000; border-radius:10px; padding:3px 7px; box-shadow:inset 0 0 0 1px rgba(255,255,255,.15); opacity:0; transition:opacity calc(120ms * var(--slow)) }
+.more.on{ opacity:1 }
+.winpanel{ width:320px; padding:8px; border-radius:16px; background:rgba(0,0,0,.9); color:#fff; box-shadow:0 0 0 1px rgba(255,255,255,.12), 0 22px 44px -14px rgba(0,0,0,.65); transform-origin:var(--tip,50%) 0; transform:translateY(-6px) scale(.94); opacity:0; pointer-events:none; transition:opacity calc(110ms * var(--slow)), transform calc(150ms * var(--slow)) cubic-bezier(.2,1.25,.4,1) }
+.winpanel.on{ opacity:1; transform:none; pointer-events:auto }
+.wp-head{ display:flex; align-items:center; gap:8px; padding:4px 6px 8px; font-size:12px; color:rgba(255,255,255,.58) }
+.wp-head b{ color:#fff; font-size:13px; font-weight:600 }
+.wrow{ display:flex; justify-content:space-between; gap:12px; padding:7px 9px; border-radius:9px; font-size:12.5px; cursor:pointer }
+.wrow .wt{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.wrow .wt em{ font-style:normal; font-size:10.5px; color:rgba(255,255,255,.5); margin-left:4px }
+.wrow .wm{ flex:none; font-size:11px; color:rgba(255,255,255,.48); white-space:nowrap }
+.wrow.sel{ background:rgba(255,255,255,.17) }
+.wp-foot{ margin-top:6px; padding:8px 6px 2px; border-top:1px solid rgba(255,255,255,.08); font-size:10.5px; color:rgba(255,255,255,.42) }
+
+.status{ position:absolute; left:50%; bottom:10px; transform:translateX(-50%); margin:0; max-width:calc(100% - 20px); padding:5px 12px; border-radius:999px; background:rgba(0,0,0,.66); color:#f2f3f6; font:12px/1.3 var(--f-mac); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none }
+.defs{ position:absolute; width:0; height:0; overflow:hidden }
+.sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap }
+
+/* ---------- keycap pad ---------- */
+.deck{ display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; justify-content:space-between }
+.pad{ display:flex; flex-wrap:wrap; gap:6px; align-items:flex-end }
+.cap{ font:500 12px/1 var(--f-mac); color:var(--key-ink); background:var(--key); border:1px solid var(--key-edge); border-bottom-width:3px; border-radius:7px; height:38px; min-width:44px; padding:0 11px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:5px }
+.cap small{ font-size:10px; color:var(--muted) }
+.cap.w{ min-width:78px } .cap.xw{ min-width:132px }
+.cap:active, .cap[aria-pressed="true"]{ transform:translateY(2px); border-bottom-width:1px; background:var(--key-down) }
+.cap[aria-pressed="true"]{ border-color:var(--accent); color:var(--accent) }
+.cap:focus-visible{ outline:2px solid var(--accent); outline-offset:2px }
+.arrows{ display:grid; grid-template-columns:repeat(3,40px); grid-template-rows:18px 18px; gap:2px }
+.arrows .cap{ height:18px; min-width:0; padding:0; font-size:10px; border-bottom-width:2px; border-radius:4px }
+.arrows .up{ grid-column:2; grid-row:1 }
+.arrows .lf{ grid-column:1; grid-row:2 } .arrows .dn{ grid-column:2; grid-row:2 } .arrows .rt{ grid-column:3; grid-row:2 }
+.pad-note{ margin:0; font-size:13px; color:var(--muted); max-width:44ch }
+
+/* ---------- knobs + log ---------- */
+.cols{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:20px; align-items:start }
+@media (max-width:880px){ .cols{ grid-template-columns:1fr } }
+.card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px 20px 20px; display:grid; gap:16px; min-width:0 }
+.card-head{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 14px }
+.readout{ margin:0; font:12.5px/1.4 var(--f-mono); color:var(--muted); font-variant-numeric:tabular-nums }
+.readout b{ color:var(--ink); font-weight:500 }
+.btn{ font:500 13px/1 var(--f-body); color:var(--ink); background:var(--raise); border:1px solid var(--line); border-radius:8px; padding:8px 12px; cursor:pointer; box-shadow:0 1px 2px var(--shadow) }
+.btn:hover{ border-color:var(--muted) }
+.btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px }
+.knob-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:16px 24px }
+.group-label{ margin:4px 0 -4px; font:500 11px/1.4 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted) }
+.rng{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 10px; align-items:baseline; min-width:0 }
+.rng label{ font-size:13px }
+.rng output{ font:12.5px var(--f-mono); color:var(--muted); font-variant-numeric:tabular-nums }
+.rng input{ grid-column:1/-1; width:100%; accent-color:var(--accent); margin:2px 0 0 }
+.seg{ border:0; padding:0; margin:0; min-width:0 }
+.seg legend{ font-size:13px; padding:0; margin-bottom:6px }
+.opts{ display:flex; flex-wrap:wrap; gap:3px; padding:3px; border-radius:9px; background:var(--ground); border:1px solid var(--line) }
+.opts input{ position:absolute; opacity:0; width:1px; height:1px; pointer-events:none }
+.opts label{ flex:1 1 auto; text-align:center; padding:6px 10px; border-radius:7px; font-size:12.5px; color:var(--muted); cursor:pointer; white-space:nowrap }
+.opts input:checked + label{ background:var(--raise); color:var(--ink); box-shadow:0 1px 2px var(--shadow), 0 0 0 1px var(--line) }
+.opts input:focus-visible + label{ outline:2px solid var(--accent); outline-offset:1px }
+.checks{ display:grid; gap:8px; align-content:start }
+.chk{ display:flex; gap:8px; align-items:flex-start; font-size:13px }
+.chk input{ accent-color:var(--accent); margin:3px 0 0 }
+
+.keys{ margin:0; display:grid; gap:0 }
+.keys > div{ display:grid; grid-template-columns:minmax(118px,auto) minmax(0,1fr); gap:12px; padding:7px 0; border-top:1px solid var(--line); align-items:baseline }
+.keys > div:first-child{ border-top:0 }
+.keys dt{ font-size:12.5px; color:var(--muted); white-space:nowrap }
+.keys dd{ margin:0; font-size:13.5px }
+.log{ list-style:none; margin:0; padding:0; display:grid }
+.log li{ display:grid; grid-template-columns:62px minmax(0,1fr) auto; gap:10px; align-items:baseline; padding:7px 0; border-top:1px solid var(--line); font-size:13.5px }
+.log li:first-child{ border-top:0 }
+.log .lv{ font:500 11.5px var(--f-mono); color:var(--muted) }
+.log .lt{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.log .lt em{ font-style:normal; color:var(--muted) }
+.log .lm{ font:12px var(--f-mono); color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap }
+.log li.empty{ display:block; color:var(--muted); font-size:13.5px }
+
+.judge{ display:grid; gap:12px; padding-top:6px }
+.judge ul{ margin:0; padding-left:18px; columns:2 320px; column-gap:40px }
+.judge li{ break-inside:avoid; margin-bottom:10px; max-width:60ch }
+.judge li b{ font-weight:600 }
+.foot{ margin:0; font-size:12.5px; color:var(--muted); max-width:80ch }
+
+@media (prefers-reduced-motion: reduce){ .caret{ animation:none } }
+</style>
+
+<main class="wrap">
+  <header class="head">
+    <p class="eyebrow">Motion study · prototype 0.1 · pinned + running apps</p>
+    <h1>Notch Islands</h1>
+    <p class="lede">Click the screen, then hold <kbd>⌥</kbd> and tap <kbd>tab</kbd> to switch the way Cmd-Tab does, or press <kbd>⌥</kbd>&#8202;<kbd>space</kbd> to open the islands and browse. The apps and windows are simulated.</p>
+  </header>
+
+  <section class="stage" aria-label="Simulated MacBook display">
+    <div class="viewport" id="viewport" tabindex="0" role="application" aria-label="Simulated screen. Hold Option and press Tab to switch apps, or press Option Space to open the islands.">
+      <div class="screen dusk" id="screen">
+        <div class="wall"></div>
+        <div class="win back" id="win-back"></div>
+        <div class="win front" id="win-front"></div>
+        <div class="menubar">
+          <div class="mb-l"><span class="mb-logo"></span><b id="mb-app">Code Editor</b><span>File</span><span>Edit</span><span>View</span><span>Go</span><span>Window</span><span>Help</span></div>
+          <div class="mb-r">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 9a14 14 0 0 1 19 0M5.8 12.4a9 9 0 0 1 12.4 0M9.1 15.8a4.2 4.2 0 0 1 5.8 0"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7.5" width="18" height="9" rx="2.6"/><rect x="4" y="9.5" width="11" height="5" rx="1.2" fill="currentColor" stroke="none"/><path d="M22 10.8v2.4"/></svg>
+            <span>Mon 5 Oct</span><span>9:41</span>
+          </div>
+        </div>
+        <div class="scrim" id="scrim"></div>
+        <div class="layer" id="goo-layer"><div class="notch" id="notch"></div><div class="qblob" id="qblob"></div></div>
+        <div class="layer" id="face-layer">
+          <div class="hint" id="hint">type to search</div>
+          <div class="qtext" id="qtext"></div>
+          <div class="more" id="more"></div>
+          <div class="label" id="label"></div>
+          <div class="winpanel" id="winpanel"></div>
+        </div>
+      </div>
+      <p class="status" id="status">Click the screen to use your keyboard</p>
+    </div>
+    <svg class="defs" aria-hidden="true" focusable="false">
+      <filter id="goo" x="-5%" y="-20%" width="110%" height="140%" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur"/>
+        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -12" result="goo"/>
+        <feBlend in="SourceGraphic" in2="goo"/>
+      </filter>
+    </svg>
+    <div class="sr" id="live" aria-live="polite"></div>
+  </section>
+
+  <div class="deck">
+    <div class="pad" id="pad" aria-label="On-screen keys">
+      <button type="button" class="cap w" data-k="Alt" aria-pressed="false">⌥ <small>hold</small></button>
+      <button type="button" class="cap w" data-k="Tab">tab</button>
+      <button type="button" class="cap xw" data-k="Space">space</button>
+      <div class="arrows">
+        <button type="button" class="cap up" data-k="ArrowUp" aria-label="Up">▲</button>
+        <button type="button" class="cap lf" data-k="ArrowLeft" aria-label="Left">◀</button>
+        <button type="button" class="cap dn" data-k="ArrowDown" aria-label="Down">▼</button>
+        <button type="button" class="cap rt" data-k="ArrowRight" aria-label="Right">▶</button>
+      </div>
+      <button type="button" class="cap w" data-k="Enter">return</button>
+      <button type="button" class="cap" data-k="Escape">esc</button>
+    </div>
+    <p class="pad-note">No keyboard? Tap <kbd>⌥</kbd> to hold it down, tap <kbd>tab</kbd> to cycle, then tap <kbd>⌥</kbd> again to let go and switch.</p>
+  </div>
+
+  <div class="cols">
+    <section class="card" aria-labelledby="knobs-h">
+      <div class="card-head">
+        <h2 id="knobs-h">Motion</h2>
+        <p class="readout" id="readout"></p>
+        <button type="button" class="btn" id="replay">Replay entrance</button>
+      </div>
+      <div class="knob-grid">
+        <fieldset class="seg">
+          <legend>Emergence</legend>
+          <div class="opts">
+            <input type="radio" name="style" id="style-goo" value="goo"><label for="style-goo">Bud from notch</label>
+            <input type="radio" name="style" id="style-slide" value="slide"><label for="style-slide">Slide out</label>
+          </div>
+        </fieldset>
+        <div class="rng"><label for="dur">Duration per island</label><output id="o-dur" for="dur"></output><input type="range" id="dur" min="80" max="400" step="10"></div>
+        <div class="rng"><label for="stagger">Stagger between islands</label><output id="o-stagger" for="stagger"></output><input type="range" id="stagger" min="0" max="40" step="2"></div>
+        <div class="rng"><label for="settle">Overshoot</label><output id="o-settle" for="settle"></output><input type="range" id="settle" min="0" max="100" step="5"></div>
+        <div class="rng"><label for="arc">Arc (outer islands rise)</label><output id="o-arc" for="arc"></output><input type="range" id="arc" min="-20" max="28" step="2"></div>
+        <div class="rng"><label for="delay">Hold-mode show delay</label><output id="o-delay" for="delay"></output><input type="range" id="delay" min="0" max="250" step="10"></div>
+        <div class="checks">
+          <label class="chk"><input type="checkbox" id="snap"> Snap islands into place when you press a key mid-entrance</label>
+          <label class="chk"><input type="checkbox" id="slow"> Slow motion ×6</label>
+          <label class="chk"><input type="checkbox" id="reduce"> Reduce motion (fade only)</label>
+        </div>
+      </div>
+      <p class="group-label">Context</p>
+      <div class="knob-grid">
+        <fieldset class="seg">
+          <legend>Apps open</legend>
+          <div class="opts">
+            <input type="radio" name="scen" id="scen-light" value="light"><label for="scen-light">Few</label>
+            <input type="radio" name="scen" id="scen-typical" value="typical"><label for="scen-typical">Typical</label>
+            <input type="radio" name="scen" id="scen-heavy" value="heavy"><label for="scen-heavy">Many</label>
+          </div>
+        </fieldset>
+        <fieldset class="seg">
+          <legend>Display</legend>
+          <div class="opts">
+            <input type="radio" name="display" id="display-notch" value="notch"><label for="display-notch">Built-in notch</label>
+            <input type="radio" name="display" id="display-external" value="external"><label for="display-external">External</label>
+          </div>
+        </fieldset>
+        <fieldset class="seg">
+          <legend>Wallpaper</legend>
+          <div class="opts">
+            <input type="radio" name="wall" id="wall-dusk" value="dusk"><label for="wall-dusk">Dark</label>
+            <input type="radio" name="wall" id="wall-day" value="day"><label for="wall-day">Light</label>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+
+    <div style="display:grid; gap:20px; min-width:0">
+      <section class="card" aria-labelledby="keys-h">
+        <h2 id="keys-h">Keys</h2>
+        <dl class="keys">
+          <div><dt><kbd>⌥</kbd> hold + <kbd>tab</kbd></dt><dd>Cycle recent apps. Let go of ⌥ to switch.</dd></div>
+          <div><dt><kbd>⌥</kbd>&#8202;<kbd>space</kbd></dt><dd>Open and stay open. Plain <kbd>space</kbd> works here too.</dd></div>
+          <div><dt><kbd>◀</kbd>&#8202;<kbd>▶</kbd></dt><dd>Move. Crossing the notch reaches your pins.</dd></div>
+          <div><dt><kbd>▼</kbd>&#8202;<kbd>▲</kbd></dt><dd>Show and walk the selected app's windows.</dd></div>
+          <div><dt><kbd>1</kbd> – <kbd>9</kbd></dt><dd>Switch straight to a pinned app.</dd></div>
+          <div><dt>Any letter</dt><dd>Filter the islands, including apps that aren't open.</dd></div>
+          <div><dt><kbd>return</kbd> · <kbd>esc</kbd></dt><dd>Switch now · back out of windows, search, then close.</dd></div>
+        </dl>
+      </section>
+      <section class="card" aria-labelledby="log-h">
+        <h2 id="log-h">Switch log</h2>
+        <ol class="log" id="log"></ol>
+      </section>
+    </div>
+  </div>
+
+  <section class="judge" aria-labelledby="judge-h">
+    <h2 id="judge-h">What to judge</h2>
+    <ul>
+      <li><b>Quick toggles.</b> A fast ⌥ tab, let go, flashes the islands for a moment. Compare a show delay of 0 with about 100 ms, the way Cmd-Tab hides itself for quick taps.</li>
+      <li><b>Bud versus slide.</b> Does budding read as the notch itself growing, and does it still feel good the fiftieth time? Try slow motion to see the shape change.</li>
+      <li><b>Pins by position.</b> With "Typical", can you reach the terminal without looking (◀ ◀ ◀ from the start, or <kbd>3</kbd>)?</li>
+      <li><b>Crowding.</b> Switch to "Many". Is the arc still easy to scan with six pins and eight recent apps on screen?</li>
+      <li><b>Contrast.</b> Try the light wallpaper and the external display. Do black islands still hold their shape?</li>
+      <li><b>Duplicates.</b> A pinned app that is running appears on both sides: pins stay where they are, and the right side always follows Cmd-Tab order. Does seeing the icon twice bother you?</li>
+    </ul>
+    <p class="foot">Browser frame timing differs from a native panel, so treat the durations as relative. The window list shows titles only, which matches the v1 plan of asking for Accessibility access alone.</p>
+  </section>
+</main>
+
+<script>
+(() => {
+'use strict';
+const W = 1280, CX = 640, OFF = 40, NW = 190, NH = 34, D = 48, STEP = 60, FIRST = NW / 2 + 38, MAXSIDE = 8;
+
+const GLY = {
+  browser: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.8 2.9 2.8 14.1 0 17M12 3.5c-2.8 2.9-2.8 14.1 0 17"/>',
+  editor: '<path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/>',
+  terminal: '<path d="M5.5 8l4 4-4 4M12.5 16.5h6"/>',
+  mail: '<rect x="3.5" y="6" width="17" height="12.5" rx="2"/><path d="M4 7.5l8 5.5 8-5.5"/>',
+  chat: '<path d="M5.5 5h13A1.5 1.5 0 0 1 20 6.5v8a1.5 1.5 0 0 1-1.5 1.5H11l-4.5 3.5V16h-1A1.5 1.5 0 0 1 4 14.5v-8A1.5 1.5 0 0 1 5.5 5z"/>',
+  notes: '<rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4"/>',
+  design: '<circle cx="9" cy="9" r="5"/><rect x="10.5" y="10.5" width="9" height="9" rx="1.5"/>',
+  music: '<path d="M9 17.5V6l10-2v11.5"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="15.5" r="2.5"/>',
+  calendar: '<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+  photos: '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3M6 6l2.1 2.1M15.9 15.9L18 18M6 18l2.1-2.1M15.9 8.1L18 6"/>',
+  files: '<path d="M3.5 7.5a2 2 0 0 1 2-2h3.8l2 2h7.2a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
+  maps: '<path d="M12 20.5s-6-5.3-6-10.5a6 6 0 0 1 12 0c0 5.2-6 10.5-6 10.5z"/><circle cx="12" cy="10" r="2.2"/>',
+  podcasts: '<circle cx="12" cy="10" r="2.4"/><path d="M12 14v6.5M7.6 14.6a6.2 6.2 0 1 1 8.8 0"/>',
+  books: '<path d="M4 6a1.5 1.5 0 0 1 1.5-1.5H11v15H5.5A1.5 1.5 0 0 1 4 18zM20 6a1.5 1.5 0 0 0-1.5-1.5H13v15h5.5A1.5 1.5 0 0 0 20 18z"/>',
+  calculator: '<rect x="5.5" y="3.5" width="13" height="17" rx="2"/><path d="M8.5 7.5h7M9 12h0M12 12h0M15 12h0M9 16h0M12 16h0M15 16h0"/>',
+  weather: '<path d="M7.5 18.5h9.5a3.8 3.8 0 0 0 .4-7.6A5.8 5.8 0 0 0 6.3 11.6a3.5 3.5 0 0 0 1.2 6.9z"/>',
+  reminders: '<path d="M10 7h10M10 12h10M10 17h10"/><circle cx="5.5" cy="7" r="1.2"/><circle cx="5.5" cy="12" r="1.2"/><circle cx="5.5" cy="17" r="1.2"/>',
+  video: '<rect x="3.5" y="6.5" width="11.5" height="11" rx="2"/><path d="M15 10.5l5.5-3v9l-5.5-3z"/>',
+  settings: '<path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2"/><circle cx="9" cy="16" r="2"/>',
+  preview: '<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M4 16l4.5-4.5 4 4 2.5-2.5 5 5"/>'
+};
+
+const APPS = {
+  browser: { name: 'Browser', g: 'browser', c: ['#5ab0ff', '#1f5fd1'], wins: [
+    { t: 'NSPanel reference — developer docs', m: 'Desktop 1' },
+    { t: 'Team board — Launcher v0.1', m: 'Desktop 1' },
+    { t: 'Motion references', m: 'Desktop 2' }] },
+  editor: { name: 'Code Editor', g: 'editor', c: ['#6e93ff', '#3446c9'], wins: [
+    { t: 'notch-islands — IslandsPanel.swift', m: 'Desktop 1' },
+    { t: 'notch-islands — Motion.swift', m: 'Desktop 1' },
+    { t: 'dotfiles — .zshrc', m: 'Desktop 2 · minimized' }] },
+  terminal: { name: 'Terminal', g: 'terminal', c: ['#4a5059', '#16181c'], wins: [
+    { t: '~/notch-islands — swift build', m: 'Desktop 1' },
+    { t: 'ssh staging', m: 'Desktop 2' }] },
+  chat: { name: 'Chat', g: 'chat', c: ['#63d28f', '#1e9a55'], wins: [{ t: '#design-review', m: 'Desktop 1' }] },
+  mail: { name: 'Mail', g: 'mail', c: ['#5cb8ff', '#2878e0'], wins: [{ t: 'Inbox — 3 unread', m: 'Desktop 1' }] },
+  notes: { name: 'Notes', g: 'notes', c: ['#ffd463', '#f0a12a'], wins: [{ t: 'Launcher ideas', m: 'Desktop 1' }, { t: 'Island sizes', m: 'Desktop 1' }] },
+  design: { name: 'Design Tool', g: 'design', c: ['#ff8a70', '#c93a6c'], wins: [{ t: 'Islands — motion frames', m: 'Desktop 2' }, { t: 'Icon grid', m: 'Desktop 2' }] },
+  music: { name: 'Music', g: 'music', c: ['#ff6a85', '#d42a5c'], wins: [{ t: 'Now Playing', m: 'Desktop 1' }] },
+  calendar: { name: 'Calendar', g: 'calendar', c: ['#ff7466', '#de3b30'], wins: [{ t: 'Week of 5 October', m: 'Desktop 1' }] },
+  files: { name: 'Files', g: 'files', c: ['#72c6ff', '#2e8ae2'], wins: [{ t: 'Downloads', m: 'Desktop 1' }, { t: 'notch-islands', m: 'Desktop 1' }] },
+  video: { name: 'Video Call', g: 'video', c: ['#55d4c8', '#1b8b98'], wins: [{ t: 'Weekly sync', m: 'Desktop 1' }] },
+  photos: { name: 'Photos', g: 'photos', c: ['#ffbe55', '#ef6b38'], wins: [] },
+  maps: { name: 'Maps', g: 'maps', c: ['#80d97e', '#2b9f88'], wins: [] },
+  podcasts: { name: 'Podcasts', g: 'podcasts', c: ['#c785ff', '#7a3ed6'], wins: [] },
+  books: { name: 'Books', g: 'books', c: ['#ffae55', '#e5700c'], wins: [] },
+  calculator: { name: 'Calculator', g: 'calculator', c: ['#9298a2', '#4a4f57'], wins: [] },
+  weather: { name: 'Weather', g: 'weather', c: ['#6bbdff', '#3567d8'], wins: [] },
+  reminders: { name: 'Reminders', g: 'reminders', c: ['#8592a8', '#4b576d'], wins: [] },
+  settings: { name: 'System Settings', g: 'settings', c: ['#a0a6b0', '#5a606a'], wins: [] },
+  preview: { name: 'Preview', g: 'preview', c: ['#86b6ff', '#4a6ee0'], wins: [] }
+};
+
+const SCEN = {
+  light: { pins: ['browser', 'editor'], rec: ['browser', 'notes', 'editor'] },
+  typical: { pins: ['browser', 'editor', 'terminal', 'chat'], rec: ['editor', 'browser', 'chat', 'terminal', 'mail', 'music', 'notes'] },
+  heavy: { pins: ['browser', 'editor', 'terminal', 'chat', 'design', 'mail'], rec: ['editor', 'browser', 'design', 'chat', 'terminal', 'mail', 'notes', 'files', 'music', 'calendar', 'video'] }
+};
+
+const $ = (s) => document.querySelector(s);
+const vp = $('#viewport'), screenEl = $('#screen'), gooL = $('#goo-layer'), faceL = $('#face-layer'),
+  notch = $('#notch'), qblob = $('#qblob'), qtext = $('#qtext'), label = $('#label'), wp = $('#winpanel'),
+  hint = $('#hint'), more = $('#more'), scrim = $('#scrim'), statusEl = $('#status'), live = $('#live');
+
+const cfg = { style: 'goo', dur: 170, stagger: 14, settle: 50, arc: 16, delay: 0, snap: true, slow: false,
+  reduce: matchMedia('(prefers-reduced-motion: reduce)').matches, scen: 'typical', display: 'notch', wall: 'dusk' };
+try { Object.assign(cfg, JSON.parse(localStorage.getItem('notch-islands-cfg') || '{}')); } catch (e) { /* storage unavailable */ }
+if (!SCEN[cfg.scen]) cfg.scen = 'typical';
+const save = () => { try { localStorage.setItem('notch-islands-cfg', JSON.stringify(cfg)); } catch (e) { /* ignore */ } };
+
+const S = { open: false, shown: false, mode: null, sel: null, query: '', win: false, winSel: 0,
+  pins: [], rec: [], wins: {}, openedAt: 0, keys: 0, timer: 0, latch: false, log: [], lastLive: '' };
+const items = new Map();
+
+const running = (id) => S.rec.includes(id);
+const idOf = (key) => (key ? key.slice(2) : null);
+const slowF = () => (cfg.slow ? 6 : 1);
+const now = () => performance.now();
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const iconHTML = (id, cls = '') => {
+  const a = APPS[id];
+  return `<span class="ico ${cls}" style="background:linear-gradient(160deg,${a.c[0]},${a.c[1]})"><svg viewBox="0 0 24 24" aria-hidden="true">${GLY[a.g]}</svg></span>`;
+};
+
+/* ---------- easing ---------- */
+const back = (k) => (t) => { const u = t - 1; return 1 + (k + 1) * u * u * u + k * u * u; };
+const outCubic = (t) => 1 - Math.pow(1 - t, 3);
+const inQuad = (t) => t * t;
+const linear = (t) => t;
+
+/* ---------- layout ---------- */
+function score(name, q) {
+  const n = name.toLowerCase();
+  if (n.startsWith(q)) return 100 - n.length * 0.1;
+  const words = n.split(/\s+/);
+  if (words.some((w) => w.startsWith(q))) return 80;
+  if (words.map((w) => w[0]).join('').startsWith(q)) return 70;
+  if (n.includes(q)) return 50;
+  let i = 0;
+  for (const ch of n) { if (ch === q[i]) i++; if (i === q.length) return 20; }
+  return -1;
+}
+function search(q) {
+  return Object.keys(APPS).map((id) => {
+    let s = score(APPS[id].name, q);
+    if (s < 0) return null;
+    if (running(id)) s += 8;
+    if (S.pins.includes(id)) s += 4;
+    return { id, s };
+  }).filter(Boolean).sort((a, b) => b.s - a.s).slice(0, MAXSIDE).map((r) => r.id);
+}
+function logical() {
+  const q = S.query.trim().toLowerCase();
+  if (q) return search(q).map((id, i) => ({ key: 'r:' + id, id, side: 1, i }));
+  const L = S.pins.slice(0, MAXSIDE).map((id, i) => ({ key: 'p:' + id, id, side: -1, i, pin: i + 1 }));
+  const R = S.rec.slice(0, MAXSIDE).map((id, i) => ({ key: 'r:' + id, id, side: 1, i }));
+  return L.concat(R);
+}
+const desired = () => (S.open && S.shown ? logical() : []);
+const ordered = (list) => list.filter((d) => d.side < 0).sort((a, b) => b.i - a.i)
+  .concat(list.filter((d) => d.side > 0).sort((a, b) => a.i - b.i));
+function slot(side, i) {
+  return { x: CX + side * (FIRST + i * STEP), y: NH + D / 2 + 6 - cfg.arc * Math.pow(i / (MAXSIDE - 1), 1.5) };
+}
+const startPos = (side) => ({ x: CX + side * 58, y: NH * 0.45, s: 0.3, o: 0 });
+function defaultSel() {
+  const R = S.rec.slice(0, MAXSIDE);
+  const id = R[1] || R[0];
+  return id ? 'r:' + id : null;
+}
+const initialWin = (id) => (id === S.rec[0] && (S.wins[id] || []).length > 1 ? 1 : 0);
+
+/* ---------- island elements + tween engine ---------- */
+function makeItem(d) {
+  const blob = document.createElement('div');
+  blob.className = 'blob';
+  blob.innerHTML = '<div class="blob-in"></div>';
+  gooL.appendChild(blob);
+  const f = document.createElement('div');
+  f.className = 'isl';
+  f.innerHTML = `<div class="isl-in"><div class="ring"></div>${iconHTML(d.id)}</div><div class="dots"></div>${d.pin ? `<span class="pin-n">${d.pin}</span>` : ''}`;
+  faceL.insertBefore(f, label);
+  const it = { key: d.key, id: d.id, side: d.side, i: d.i, blob, face: f, cur: startPos(d.side), tw: null, leaving: false };
+  f.addEventListener('mousemove', () => {
+    if (S.open && S.shown && !it.leaving && S.sel !== it.key) {
+      S.sel = it.key;
+      if (S.win) S.winSel = initialWin(it.id);
+      render();
+    }
+  });
+  f.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (it.leaving || !S.open) return;
+    S.sel = it.key; S.keys++; S.win = false;
+    commit();
+  });
+  items.set(d.key, it);
+  return it;
+}
+function apply(it) {
+  const c = it.cur;
+  const t = `translate3d(${(c.x - D / 2).toFixed(2)}px,${(c.y - D / 2 + OFF).toFixed(2)}px,0) scale(${c.s.toFixed(4)})`;
+  it.blob.style.transform = t;
+  it.face.style.transform = t;
+  it.face.style.opacity = c.o.toFixed(3);
+  it.blob.style.opacity = cfg.style === 'goo' && !cfg.reduce ? '1' : c.o.toFixed(3);
+}
+function destroy(it) { it.blob.remove(); it.face.remove(); items.delete(it.key); }
+function destroyAll() { [...items.values()].forEach(destroy); }
+
+let raf = 0;
+function tween(it, to, dur, delay, ease, oFrac, kind) {
+  const f = slowF();
+  it.tw = { from: { ...it.cur }, to: { ...to }, t0: now() + delay * f, dur: Math.max(1, dur * f), ease, oFrac, kind };
+  kick();
+}
+function kick() { if (!raf) raf = requestAnimationFrame(tick); }
+function tick() {
+  raf = 0;
+  const t = now();
+  let live = false;
+  for (const it of items.values()) {
+    const tw = it.tw;
+    if (!tw) continue;
+    const u = (t - tw.t0) / tw.dur;
+    if (u < 0) { live = true; continue; }
+    if (u >= 1) {
+      it.cur = { ...tw.to }; it.tw = null; apply(it);
+      if (it.leaving) destroy(it);
+      continue;
+    }
+    const e = tw.ease(u), a = tw.from, b = tw.to;
+    it.cur.x = a.x + (b.x - a.x) * e;
+    it.cur.y = a.y + (b.y - a.y) * e;
+    it.cur.s = a.s + (b.s - a.s) * e;
+    it.cur.o = a.o + (b.o - a.o) * Math.min(1, u / tw.oFrac);
+    apply(it);
+    live = true;
+  }
+  if (live) kick();
+}
+function snapIn() {
+  if (!cfg.snap) return;
+  for (const it of items.values()) {
+    if (it.tw && it.tw.kind === 'in') { it.cur = { ...it.tw.to }; it.tw = null; apply(it); }
+  }
+}
+
+function sync(opts = {}) {
+  const list = desired();
+  const want = new Map(list.map((d) => [d.key, d]));
+  const k = (cfg.settle / 100) * 1.7;
+  const RM = cfg.reduce;
+  const leavers = [...items.values()].filter((it) => !it.leaving && !want.has(it.key));
+  const maxI = leavers.reduce((m, it) => Math.max(m, it.i), 0);
+  for (const it of leavers) {
+    it.leaving = true;
+    it.face.classList.add('leaving');
+    if (RM) tween(it, { ...it.cur, o: 0 }, 110, 0, linear, 1, 'out');
+    else tween(it, startPos(it.side), cfg.dur * 0.7, opts.closing ? (maxI - it.i) * cfg.stagger * 0.5 : 0, inQuad, 0.75, 'out');
+  }
+  for (const d of list) {
+    const p = slot(d.side, d.i), to = { x: p.x, y: p.y, s: 1, o: 1 };
+    let it = items.get(d.key);
+    if (it && !it.leaving) {
+      const target = it.tw ? it.tw.to : it.cur;
+      if (Math.abs(target.x - to.x) > 0.5 || Math.abs(target.y - to.y) > 0.5) {
+        it.i = d.i; it.side = d.side;
+        if (RM) { it.tw = null; it.cur = { ...to }; apply(it); }
+        else tween(it, to, cfg.dur * 0.85, 0, outCubic, 1, 'move');
+      }
+      continue;
+    }
+    if (it && it.leaving) {
+      it.leaving = false;
+      it.face.classList.remove('leaving');
+      it.i = d.i; it.side = d.side;
+      tween(it, to, RM ? 110 : cfg.dur, 0, RM ? linear : back(k), RM ? 1 : 0.4, 'in');
+      continue;
+    }
+    it = makeItem(d);
+    if (RM) { it.cur = { ...to, o: 0 }; apply(it); tween(it, to, 120, 0, linear, 1, 'in'); }
+    else { apply(it); tween(it, to, cfg.dur, d.i * cfg.stagger, back(k), 0.4, 'in'); }
+  }
+  render();
+}
+
+/* ---------- render overlays ---------- */
+function render() {
+  const vis = S.open && S.shown;
+  for (const it of items.values()) {
+    const on = vis && !it.leaving && it.key === S.sel;
+    it.face.classList.toggle('sel', on);
+    it.blob.classList.toggle('sel', on);
+    const n = Math.min(3, running(it.id) ? S.wins[it.id].length : 0);
+    const dots = it.face.querySelector('.dots');
+    if (dots.childElementCount !== n) dots.innerHTML = '<i></i>'.repeat(n);
+  }
+  faceL.classList.toggle('tap', vis && S.mode === 'tap' && !S.query);
+  scrim.classList.toggle('on', vis);
+  notch.classList.toggle('on', vis);
+  hint.classList.toggle('on', vis && S.mode === 'tap' && !S.query && !S.win);
+
+  if (vis && S.query) {
+    const none = logical().length === 0;
+    qtext.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg><span>${esc(S.query)}</span><i class="caret"></i>${none ? '<em>  no matches</em>' : ''}`;
+    qtext.classList.add('on');
+    qblob.style.width = (qtext.offsetWidth + 50) + 'px';
+  } else {
+    qtext.classList.remove('on');
+    qblob.style.width = '0px';
+  }
+
+  const sit = items.get(S.sel);
+  if (vis && sit && !sit.leaving && !S.win) {
+    const p = slot(sit.side, sit.i), a = APPS[sit.id];
+    const n = running(sit.id) ? S.wins[sit.id].length : 0;
+    const sub = n > 1 ? `${n} windows · ▼` : n === 1 ? '1 window' : 'not open · return opens';
+    label.innerHTML = `<b>${esc(a.name)}</b><span>${sub}</span>`;
+    const lw = label.offsetWidth;
+    const x = Math.max(lw / 2 + 8, Math.min(W - lw / 2 - 8, p.x));
+    label.style.transform = `translate3d(${(x - lw / 2).toFixed(1)}px,${(p.y + OFF + D / 2 + 16).toFixed(1)}px,0)`;
+    label.classList.add('on');
+  } else {
+    label.classList.remove('on');
+  }
+
+  if (vis && S.win && sit && !sit.leaving) {
+    const a = APPS[sit.id], ws = S.wins[sit.id] || [];
+    const isCur = sit.id === S.rec[0];
+    wp.innerHTML = `<div class="wp-head">${iconHTML(sit.id, 'sm')}<b>${esc(a.name)}</b><span>${ws.length} window${ws.length === 1 ? '' : 's'}</span></div>` +
+      ws.map((w, i) => `<div class="wrow${i === S.winSel ? ' sel' : ''}" data-i="${i}"><span class="wt">${esc(w.t)}${isCur && i === 0 ? '<em>in front</em>' : ''}</span><span class="wm">${esc(w.m)}</span></div>`).join('') +
+      '<div class="wp-foot">Titles only. Thumbnails would need Screen Recording access.</div>';
+    const p = slot(sit.side, sit.i), pw = 320;
+    const left = Math.max(12, Math.min(W - pw - 12, p.x - pw / 2));
+    wp.style.left = left + 'px';
+    wp.style.top = (p.y + OFF + D / 2 + 14) + 'px';
+    wp.style.setProperty('--tip', (p.x - left) + 'px');
+    wp.classList.add('on');
+  } else {
+    wp.classList.remove('on');
+  }
+
+  const extra = S.rec.length - MAXSIDE;
+  if (vis && !S.query && extra > 0) {
+    const p = slot(1, MAXSIDE);
+    more.textContent = '+' + extra;
+    more.style.transform = `translate3d(${p.x - 6}px,${p.y + OFF}px,0) translate(-50%,-50%)`;
+    more.classList.add('on');
+  } else {
+    more.classList.remove('on');
+  }
+
+  let st;
+  if (document.activeElement !== vp) st = 'Click the screen to use your keyboard';
+  else if (!S.open) st = 'Hold ⌥ and tap tab, or press ⌥ space';
+  else if (S.mode === 'hold') st = S.latch ? '⌥ held · tap tab to cycle · tap ⌥ to switch' : 'Holding ⌥ · tab cycles · let go to switch';
+  else if (S.win) st = '▲ ▼ choose a window · return switches · esc goes back';
+  else if (S.query) st = 'Filtering · return opens · esc clears';
+  else st = '◀ ▶ move · ▼ windows · 1–9 pins · type to search · esc closes';
+  statusEl.textContent = st;
+
+  const sayName = vis && S.sel ? APPS[idOf(S.sel)].name : '';
+  if (sayName && sayName !== S.lastLive) live.textContent = sayName;
+  S.lastLive = sayName;
+}
+
+/* ---------- desktop + log ---------- */
+function fillWin(el, id) {
+  if (!id) { el.hidden = true; return; }
+  el.hidden = false;
+  const a = APPS[id], w = S.wins[id][0];
+  el.innerHTML = `<div class="tb"><span class="tl"><i></i><i></i><i></i></span><span class="tt">${esc(w.t)}</span></div>` +
+    `<div class="wb"><div class="side"><i></i><i></i><i></i><i></i><i></i><i></i></div>` +
+    `<div class="main"><div class="mh">${iconHTML(id, 'big')}<div><b>${esc(a.name)}</b><span>${esc(w.t)}</span></div></div>` +
+    `<div class="ph" style="--c:${a.c[0]}"><i></i><i></i><i></i><i></i><i></i></div></div></div>`;
+}
+function renderDesktop(swap) {
+  fillWin($('#win-front'), S.rec[0]);
+  fillWin($('#win-back'), S.rec[1]);
+  $('#mb-app').textContent = S.rec[0] ? APPS[S.rec[0]].name : 'Finder';
+  if (swap) {
+    const w = $('#win-front');
+    w.classList.remove('swap');
+    void w.offsetWidth;
+    w.classList.add('swap');
+  }
+}
+const fmtMs = (ms) => (ms < 1000 ? Math.round(ms) + ' ms' : (ms / 1000).toFixed(2) + ' s');
+function renderLog() {
+  const el = $('#log');
+  if (!S.log.length) {
+    el.innerHTML = '<li class="empty">Each switch lands here with how many keys it took and the time from hotkey to switch.</li>';
+    return;
+  }
+  el.innerHTML = S.log.map((r) => `<li><span class="lv">${r.via === 'hold' ? '⌥ tab' : r.via === 'click' ? 'click' : '⌥ space'}</span>` +
+    `<span class="lt">${esc(APPS[r.id].name)}${r.winTitle ? ' <em>· ' + esc(r.winTitle) + '</em>' : ''}${r.shown ? '' : ' <em>· islands never shown</em>'}</span>` +
+    `<span class="lm">${r.keys} key${r.keys === 1 ? '' : 's'} · ${fmtMs(r.ms)}</span></li>`).join('');
+}
+function readout() {
+  const maxI = Math.min(MAXSIDE, Math.max(S.pins.length, S.rec.length)) - 1;
+  const inT = cfg.reduce ? 120 : Math.round(cfg.dur + cfg.stagger * maxI);
+  const outT = cfg.reduce ? 110 : Math.round(cfg.dur * 0.7 + cfg.stagger * 0.5 * maxI);
+  $('#readout').innerHTML = `Entrance <b>${inT} ms</b> · exit <b>${outT} ms</b>${cfg.slow ? ' · playing ×6' : ''}`;
+}
+
+/* ---------- actions ---------- */
+function openPanel(mode) {
+  if (S.open) return;
+  clearTimeout(S.timer);
+  Object.assign(S, { open: true, mode, query: '', win: false, winSel: 0, openedAt: now(), keys: 1, sel: defaultSel() });
+  const delay = mode === 'hold' ? cfg.delay * slowF() : 0;
+  if (delay > 0) {
+    S.shown = false;
+    S.timer = setTimeout(() => { if (S.open) { S.shown = true; sync(); } }, delay);
+    render();
+  } else {
+    S.shown = true;
+    sync();
+  }
+}
+function closePanel() {
+  clearTimeout(S.timer);
+  Object.assign(S, { open: false, shown: false, mode: null, query: '', win: false });
+  sync({ closing: true });
+}
+function activate(id, wi) {
+  if (!running(id)) {
+    const w = APPS[id].wins;
+    S.wins[id] = (w.length ? w : [{ t: APPS[id].name, m: 'Desktop 1' }]).map((x) => ({ ...x }));
+  }
+  if (wi != null && wi > 0) S.wins[id].unshift(S.wins[id].splice(wi, 1)[0]);
+  S.rec = [id, ...S.rec.filter((x) => x !== id)];
+  renderDesktop(true);
+}
+function commit(via) {
+  if (!S.open) return;
+  const key = S.sel;
+  if (!key) { closePanel(); return; }
+  const id = idOf(key);
+  const wi = S.win && running(id) ? S.winSel : null;
+  const rec = { via: via || S.mode, id, winTitle: wi != null ? S.wins[id][wi].t : null, keys: S.keys, ms: now() - S.openedAt, shown: S.shown };
+  activate(id, wi);
+  S.log.unshift(rec);
+  S.log = S.log.slice(0, 6);
+  renderLog();
+  closePanel();
+}
+function move(dir) {
+  const L = ordered(logical());
+  if (!L.length) return;
+  let i = L.findIndex((d) => d.key === S.sel);
+  i = i < 0 ? 0 : Math.max(0, Math.min(L.length - 1, i + dir));
+  S.sel = L[i].key;
+  if (S.win) { if (running(idOf(S.sel))) S.winSel = initialWin(idOf(S.sel)); else S.win = false; }
+  render();
+}
+function cycle(dir) {
+  const R = logical().filter((d) => d.side > 0);
+  if (!R.length) return;
+  let i = R.findIndex((d) => d.key === S.sel);
+  i = i < 0 ? 0 : (i + dir + R.length) % R.length;
+  S.sel = R[i].key;
+  if (S.win) { if (running(idOf(S.sel))) S.winSel = initialWin(idOf(S.sel)); else S.win = false; }
+  render();
+}
+function down() {
+  const id = idOf(S.sel);
+  if (!id) return;
+  if (!S.win) {
+    if (!running(id)) return;
+    S.win = true;
+    S.winSel = initialWin(id);
+  } else {
+    S.winSel = Math.min(S.wins[id].length - 1, S.winSel + 1);
+  }
+  render();
+}
+function up() {
+  if (!S.win) return;
+  if (S.winSel > 0) S.winSel--; else S.win = false;
+  render();
+}
+function onQuery() {
+  S.win = false;
+  const q = S.query.trim().toLowerCase();
+  if (q) { const r = search(q); S.sel = r.length ? 'r:' + r[0] : null; }
+  else S.sel = defaultSel();
+  sync();
+}
+function escape() {
+  if (S.win) { S.win = false; render(); }
+  else if (S.query) { S.query = ''; onQuery(); }
+  else closePanel();
+}
+
+/* ---------- keyboard ---------- */
+function onDown(e) {
+  const k = e.key, c = e.code || '';
+  if (k === 'Alt') return;
+  if (k === 'Tab' && e.altKey) {
+    e.preventDefault();
+    if (!S.open) { openPanel('hold'); return; }
+    S.keys++; snapIn(); cycle(e.shiftKey ? -1 : 1);
+    return;
+  }
+  if (c === 'Space' && (e.altKey || !S.open)) {
+    e.preventDefault();
+    if (!S.open) openPanel('tap'); else closePanel();
+    return;
+  }
+  if (!S.open) return;
+  let handled = true;
+  switch (k) {
+    case 'ArrowLeft': case 'ArrowRight': S.keys++; snapIn(); move(k === 'ArrowLeft' ? -1 : 1); break;
+    case 'ArrowDown': S.keys++; snapIn(); down(); break;
+    case 'ArrowUp': S.keys++; snapIn(); up(); break;
+    case 'Enter': S.keys++; commit(); break;
+    case 'Escape': S.keys++; escape(); break;
+    case 'Backspace':
+      if (S.query) { S.keys++; S.query = e.altKey || e.metaKey ? '' : S.query.slice(0, -1); onQuery(); }
+      break;
+    default: handled = false;
+  }
+  if (!handled && S.mode === 'tap' && !e.metaKey && !e.ctrlKey) {
+    if (/^Digit[1-9]$/.test(c) && !S.query && !S.win) {
+      const id = S.pins[+c.slice(5) - 1];
+      if (id) { S.keys++; S.sel = 'p:' + id; commit(); }
+      handled = true;
+    } else {
+      let ch = null;
+      if (/^Key[A-Z]$/.test(c)) ch = c.slice(3).toLowerCase();
+      else if (/^Digit[0-9]$/.test(c) && S.query) ch = c.slice(5);
+      else if (c === 'Space' && S.query) ch = ' ';
+      if (ch) { S.keys++; S.query += ch; onQuery(); handled = true; }
+    }
+  }
+  if (handled) e.preventDefault();
+}
+function onUp(e) {
+  if (e.key !== 'Alt') return;
+  if (S.latch && !e.synthetic) return;
+  if (S.open && S.mode === 'hold') commit();
+}
+vp.addEventListener('keydown', onDown);
+vp.addEventListener('keyup', onUp);
+vp.addEventListener('focus', render);
+vp.addEventListener('blur', () => {
+  if (S.open && S.mode === 'hold') closePanel();
+  if (S.latch) { S.latch = false; syncLatch(); }
+  render();
+});
+let wasFocused = false;
+vp.addEventListener('mousedown', () => { wasFocused = document.activeElement === vp; });
+vp.addEventListener('click', (e) => {
+  if (e.target.closest('.isl, .winpanel')) return;
+  if (wasFocused && S.open) closePanel();
+  vp.focus({ preventScroll: true });
+});
+wp.addEventListener('mousemove', (e) => {
+  const r = e.target.closest('.wrow');
+  if (r && +r.dataset.i !== S.winSel) { S.winSel = +r.dataset.i; render(); }
+});
+wp.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const r = e.target.closest('.wrow');
+  if (!r) return;
+  S.winSel = +r.dataset.i; S.keys++;
+  commit();
+});
+
+/* ---------- on-screen keys ---------- */
+const pad = $('#pad'), altCap = pad.querySelector('[data-k="Alt"]');
+function syncLatch() { altCap.setAttribute('aria-pressed', S.latch ? 'true' : 'false'); }
+const fake = (key, code, alt) => ({ key, code, altKey: !!alt, shiftKey: false, metaKey: false, ctrlKey: false, preventDefault() {} });
+const PADMAP = { Tab: ['Tab', 'Tab'], Space: [' ', 'Space'], ArrowLeft: ['ArrowLeft', 'ArrowLeft'], ArrowRight: ['ArrowRight', 'ArrowRight'],
+  ArrowUp: ['ArrowUp', 'ArrowUp'], ArrowDown: ['ArrowDown', 'ArrowDown'], Enter: ['Enter', 'Enter'], Escape: ['Escape', 'Escape'] };
+pad.addEventListener('mousedown', (e) => { if (e.target.closest('button')) e.preventDefault(); });
+pad.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-k]');
+  if (!b) return;
+  if (document.activeElement !== vp) vp.focus({ preventScroll: true });
+  const k = b.dataset.k;
+  if (k === 'Alt') {
+    S.latch = !S.latch;
+    syncLatch();
+    if (!S.latch) onUp({ key: 'Alt', synthetic: true });
+    render();
+    return;
+  }
+  const [key, code] = PADMAP[k];
+  onDown(fake(key, code, S.latch));
+});
+
+/* ---------- knobs ---------- */
+const FMT = { dur: (v) => v + ' ms', stagger: (v) => v + ' ms', settle: (v) => v + '%', arc: (v) => (v > 0 ? '+' : '') + v + ' px', delay: (v) => v + ' ms' };
+function applyCfg() {
+  gooL.classList.toggle('goo', cfg.style === 'goo' && !cfg.reduce);
+  screenEl.classList.toggle('day', cfg.wall === 'day');
+  screenEl.classList.toggle('dusk', cfg.wall !== 'day');
+  screenEl.classList.toggle('rm', cfg.reduce);
+  notch.classList.toggle('virtual', cfg.display === 'external');
+  screenEl.style.setProperty('--slow', slowF());
+  items.forEach(apply);
+  readout();
+  if (S.open && S.shown) sync();
+}
+Object.keys(FMT).forEach((id) => {
+  const el = $('#' + id), out = $('#o-' + id);
+  el.value = cfg[id];
+  out.textContent = FMT[id](cfg[id]);
+  el.addEventListener('input', () => { cfg[id] = +el.value; out.textContent = FMT[id](cfg[id]); save(); applyCfg(); });
+});
+['snap', 'slow', 'reduce'].forEach((id) => {
+  const el = $('#' + id);
+  el.checked = !!cfg[id];
+  el.addEventListener('change', () => { cfg[id] = el.checked; save(); applyCfg(); });
+});
+['style', 'display', 'wall', 'scen'].forEach((name) => {
+  document.querySelectorAll(`input[name="${name}"]`).forEach((el) => {
+    el.checked = el.value === cfg[name];
+    el.addEventListener('change', () => {
+      if (!el.checked) return;
+      cfg[name] = el.value;
+      save();
+      if (name === 'scen') { applyScenario(cfg.scen); setTimeout(() => openPanel('tap'), 80); }
+      else applyCfg();
+    });
+  });
+});
+$('#replay').addEventListener('click', () => {
+  vp.focus({ preventScroll: true });
+  if (S.open) {
+    closePanel();
+    setTimeout(() => openPanel('tap'), (cfg.dur * 0.7 + cfg.stagger * 4 + 90) * slowF());
+  } else {
+    openPanel('tap');
+  }
+});
+
+function applyScenario(name) {
+  clearTimeout(S.timer);
+  destroyAll();
+  Object.assign(S, { open: false, shown: false, mode: null, query: '', win: false, sel: null });
+  const sc = SCEN[name];
+  S.pins = sc.pins.slice();
+  S.rec = sc.rec.slice();
+  S.wins = {};
+  S.rec.forEach((id) => { S.wins[id] = APPS[id].wins.map((x) => ({ ...x })); });
+  renderDesktop(false);
+  render();
+  readout();
+}
+
+/* ---------- scale the 1280×600 screen into the page ---------- */
+const fit = () => { screenEl.style.transform = `scale(${vp.clientWidth / W})`; };
+new ResizeObserver(fit).observe(vp);
+fit();
+
+applyCfg();
+applyScenario(cfg.scen);
+renderLog();
+setTimeout(() => { if (!S.open) openPanel('tap'); }, 450);
+})();
+</script>

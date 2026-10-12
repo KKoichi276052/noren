@@ -1,0 +1,1205 @@
+<meta charset="utf-8">
+<title>Axle Workspaces</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Schibsted+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: the simulated MacBook display is the hero; keycap pad under it; knobs beside keys + switch log; then review questions. */
+:root{
+  --ground:#e7e8eb; --surface:#f6f6f8; --raise:#ffffff; --ink:#16171a; --muted:#5b5f69; --line:#d1d3d9;
+  --accent:#2f5bd3; --key:#fdfdfe; --key-down:#eceef2; --key-edge:#c3c6cd; --key-ink:#26282d;
+  --bezel:#0b0b0c; --bezel-edge:#c4c6cc; --shadow:rgba(20,24,40,.14); --shadow-deep:rgba(20,24,40,.45);
+  --f-display:"Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --f-mac:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#101114; --surface:#17181c; --raise:#202227; --ink:#ebecef; --muted:#9a9ea8; --line:#2a2c32;
+    --accent:#88a3ff; --key:#25272d; --key-down:#1c1d22; --key-edge:#3b3e46; --key-ink:#e3e4e8;
+    --bezel-edge:#2c2e34; --shadow:rgba(0,0,0,.4); --shadow-deep:rgba(0,0,0,.7); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#101114; --surface:#17181c; --raise:#202227; --ink:#ebecef; --muted:#9a9ea8; --line:#2a2c32;
+  --accent:#88a3ff; --key:#25272d; --key-down:#1c1d22; --key-edge:#3b3e46; --key-ink:#e3e4e8;
+  --bezel-edge:#2c2e34; --shadow:rgba(0,0,0,.4); --shadow-deep:rgba(0,0,0,.7); color-scheme:dark;
+}
+*{ box-sizing:border-box }
+[hidden]{ display:none !important }
+body{ background:var(--ground); color:var(--ink); font:15px/1.55 var(--f-body) }
+.wrap{ max-width:1180px; margin:0 auto; padding-inline:20px; padding-block:32px 64px; display:grid; gap:20px }
+@media (max-width:520px){ .wrap{ padding-inline:16px; padding-block:22px 48px } }
+.head{ display:grid; gap:6px; max-width:72ch }
+.eyebrow{ margin:0; font:500 11.5px/1.4 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted) }
+h1{ margin:0; font:700 clamp(30px,4.4vw,44px)/1.05 var(--f-display); letter-spacing:-.02em; text-wrap:balance }
+.lede{ margin:4px 0 0; color:var(--muted) }
+h2{ margin:0; font:600 16px/1.3 var(--f-display) }
+kbd{ font:500 12px/1 var(--f-mac); display:inline-block; min-width:1.8em; padding:3px 6px 4px; border:1px solid var(--key-edge); border-bottom-width:2px; border-radius:5px; background:var(--key); color:var(--key-ink); text-align:center; white-space:nowrap; vertical-align:1px }
+
+/* ---------- stage ---------- */
+.stage{ position:relative; padding:9px; background:var(--bezel); border-radius:20px; box-shadow:0 0 0 1px var(--bezel-edge), 0 26px 50px -30px var(--shadow-deep) }
+.viewport{ position:relative; width:100%; aspect-ratio:1280/800; overflow:hidden; border-radius:10px; outline:none; background:#0d1020 }
+.viewport:focus-visible{ box-shadow:0 0 0 3px var(--accent) }
+.screen{ position:absolute; left:0; top:0; width:1280px; height:800px; transform-origin:0 0; overflow:hidden; font-family:var(--f-mac); user-select:none; -webkit-user-select:none; --slow:1 }
+.wall{ position:absolute; inset:0 }
+.dusk .wall, .dusk .nd-screen{ background:radial-gradient(110% 90% at 18% 8%, #2c3d72 0%, transparent 58%), radial-gradient(90% 80% at 88% 18%, #5b2c62 0%, transparent 55%), linear-gradient(160deg,#151b35,#0c0f1d 60%,#1d1430) }
+.day .wall, .day .nd-screen{ background:radial-gradient(110% 80% at 14% 0%, #ffe0c2 0%, transparent 55%), radial-gradient(90% 80% at 90% 12%, #c6d9ff 0%, transparent 60%), linear-gradient(170deg,#f3eee8,#dde6f3) }
+#desk{ position:absolute; inset:0; z-index:1 }
+.flying #desk{ z-index:6 }
+.menubar{ position:absolute; z-index:2; left:0; top:0; width:1280px; height:34px; display:flex; justify-content:space-between; align-items:center; padding:0 16px; font-size:13px; backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px) }
+.dusk .menubar{ background:rgba(8,10,22,.38); color:#f1f2f6 }
+.day .menubar{ background:rgba(255,255,255,.5); color:#1b1c20 }
+.mb-l, .mb-r{ display:flex; align-items:center; gap:18px; white-space:nowrap }
+.mb-l{ max-width:520px; overflow:hidden }
+.mb-l b{ font-weight:700 }
+.mb-logo{ width:13px; height:13px; border-radius:4px; border:1.8px solid currentColor; flex:none }
+.mb-r{ gap:14px }
+.mb-r svg{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round }
+.dwin{ position:absolute; border-radius:10px; overflow:hidden; background:#1b1d22; transform-origin:0 0; box-shadow:0 30px 60px -24px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.28);
+  transition:left calc(.3s * var(--slow)) cubic-bezier(.2,.8,.2,1), top calc(.3s * var(--slow)) cubic-bezier(.2,.8,.2,1), width calc(.3s * var(--slow)) cubic-bezier(.2,.8,.2,1), height calc(.3s * var(--slow)) cubic-bezier(.2,.8,.2,1), opacity calc(.22s * var(--slow)), transform calc(.22s * var(--slow)) }
+.dwin.gone{ opacity:0; transform:scale(.97); pointer-events:none }
+.dwin.inactive .wt-bar i{ background:rgba(140,140,150,.5) !important }
+.dwin .splash{ position:absolute; inset:0; display:grid; place-items:center; opacity:0; transition:opacity calc(.2s * var(--slow)) }
+.dwin .thumb{ transition:opacity calc(.25s * var(--slow)) }
+.dwin.launching .splash{ opacity:1 }
+.dwin.launching .thumb{ opacity:0 }
+.thumb{ width:400px; height:250px; transform:scale(var(--k,1)); transform-origin:0 0 }
+.scrim{ position:absolute; z-index:3; inset:0; background:radial-gradient(75% 560px at 50% 0, rgba(0,0,0,.5), rgba(0,0,0,.18) 100%); opacity:0; transition:opacity 200ms; pointer-events:none }
+.scrim.on{ opacity:1 }
+
+/* ---------- overlay ---------- */
+.layer{ position:absolute; left:0; top:-40px; width:1280px; pointer-events:none }
+#goo-layer{ z-index:4; height:840px }
+#goo-layer.goo{ filter:url(#goo) }
+#face-layer{ z-index:5; height:840px }
+.notch{ position:absolute; left:545px; top:0; width:190px; height:74px; background:#000; border-radius:0 0 14px 14px }
+.bl{ position:absolute; left:0; top:0; background:#000; transform-origin:50% 50%; will-change:transform }
+.nd{ position:absolute; left:0; top:0; transform-origin:50% 50%; will-change:transform,opacity; pointer-events:auto; cursor:pointer }
+.nd.leaving{ pointer-events:none }
+.nd-label, .nd-screen{ pointer-events:none }
+.nd.peek{ filter:blur(1.4px) saturate(.75) }
+.nd-screen.peek{ pointer-events:auto }
+.nd-screen{ border-radius:8px; overflow:hidden }
+.nd-screen .mmb{ position:absolute; left:0; right:0; top:0; height:4.25%; background:rgba(0,0,0,.3) }
+.day .nd-screen .mmb{ background:rgba(255,255,255,.5) }
+.nd-screen .mno{ position:absolute; left:42.58%; width:14.84%; top:0; height:4.25%; background:#000; border-radius:0 0 3px 3px }
+.nd-card .frame{ position:absolute; inset:0; border-radius:var(--r,8px); overflow:hidden; background:#000; box-shadow:0 0 0 1px rgba(0,0,0,.7), 0 10px 24px -12px rgba(0,0,0,.7); transition:box-shadow 120ms }
+.nd-card.sel .frame{ box-shadow:0 0 0 2px #fff, 0 0 24px 4px rgba(140,170,255,.45), 0 14px 30px -10px rgba(0,0,0,.75) }
+.frame .badge{ position:absolute; left:6px; top:6px }
+.frame.ghost{ display:grid; place-items:center; align-content:center; gap:8px; background:#121318; outline:1.5px dashed rgba(255,255,255,.28); outline-offset:-7px }
+.frame.ghost small{ color:rgba(255,255,255,.58); font-size:11px }
+.frame.wscard{ display:grid; place-items:center; align-content:center; gap:10px; background:#0e0f13 }
+.frame.wscard b{ color:#fff; font-size:14px; font-weight:600 }
+.frame.wscard .gly{ width:44%; height:auto }
+.nd-card .cap{ position:absolute; left:50%; top:calc(100% + 7px); transform:translateX(-50%); max-width:calc(100% + 30px); display:flex; gap:6px; align-items:center; padding:3px 9px; border-radius:9px; background:rgba(0,0,0,.8); font-size:11.5px; line-height:1.3; color:rgba(255,255,255,.66); white-space:nowrap }
+.nd-card.sel .cap{ color:#fff }
+.nd-card .cap span{ overflow:hidden; text-overflow:ellipsis; min-width:0 }
+.nd-card .cap em{ font-style:normal; color:rgba(255,255,255,.48) }
+.nd-island .isl-in{ position:absolute; inset:0; border-radius:50%; display:grid; place-items:center; box-shadow:inset 0 0 0 1px rgba(255,255,255,.15); transition:box-shadow 120ms }
+.nd-island.cur .isl-in{ box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55) }
+.nd-island .ring{ position:absolute; inset:-3px; border-radius:50%; box-shadow:0 0 0 2px rgba(255,255,255,.94), 0 0 20px 3px rgba(140,170,255,.5); opacity:0; transition:opacity 100ms }
+.nd-island.sel .ring{ opacity:1 }
+.nd-island .gw{ display:grid; place-items:center }
+.nd-island .num{ position:absolute; left:-4px; top:-4px; min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:#000; color:rgba(255,255,255,.82); font:600 10px/16px var(--f-mac); text-align:center; box-shadow:0 0 0 1px rgba(255,255,255,.22) }
+.nd-island.act::after{ content:""; position:absolute; left:50%; bottom:-10px; width:5px; height:5px; margin-left:-2.5px; border-radius:50%; background:#fff; box-shadow:0 0 0 1px rgba(0,0,0,.6) }
+.gly rect{ fill:rgba(255,255,255,.88) }
+.gly rect.off{ fill:none; stroke:rgba(255,255,255,.6); stroke-width:1; stroke-dasharray:2 1.5 }
+.nd-label{ display:flex; align-items:center; justify-content:center }
+.pill{ display:inline-flex; gap:8px; align-items:center; max-width:100%; padding:4px 12px; border-radius:12px; background:rgba(0,0,0,.86); color:#fff; font-size:12.5px; white-space:nowrap; box-shadow:0 0 0 1px rgba(255,255,255,.08) }
+.pill b{ font-weight:600; overflow:hidden; text-overflow:ellipsis; min-width:0 }
+.pill em{ font-style:normal; color:rgba(255,255,255,.55) }
+.pill.sub{ font-size:11.5px; color:rgba(255,255,255,.72); padding:3px 10px; background:rgba(0,0,0,.72) }
+.pill svg{ width:13px; height:13px; fill:none; stroke:rgba(255,255,255,.6); stroke-width:2.2; stroke-linecap:round; flex:none }
+.caret{ width:1.5px; height:14px; background:#9db6ff; animation:blink 1s steps(1) infinite; flex:none }
+.sbar{ display:flex; align-items:center; gap:10px; width:100%; height:100%; padding:0 20px; color:#fff; font-size:15px; white-space:nowrap; overflow:hidden }
+.sbar svg{ width:16px; height:16px; fill:none; stroke:rgba(255,255,255,.6); stroke-width:2.2; stroke-linecap:round; flex:none }
+.sbar .q{ overflow:hidden; text-overflow:ellipsis; min-width:0 }
+.sbar .caret{ height:18px; margin-left:-7px }
+.sbar em{ margin-left:auto; padding-left:10px; font-style:normal; font-size:12px; color:rgba(255,255,255,.5); flex:none }
+@keyframes blink{ 50%{ opacity:0 } }
+.ico{ display:grid; place-items:center; flex:none; border-radius:22.5%; box-shadow:inset 0 0 0 .5px rgba(255,255,255,.28), 0 1px 2px rgba(0,0,0,.35) }
+.ico svg{ fill:none; stroke:#fff; stroke-linecap:round; stroke-linejoin:round }
+.ico.xs{ width:15px; height:15px; border-radius:4px } .ico.xs svg{ width:10px; height:10px; stroke-width:2.6 }
+.ico.md{ width:40px; height:40px } .ico.md svg{ width:24px; height:24px; stroke-width:2 }
+.ico.xl{ width:72px; height:72px } .ico.xl svg{ width:42px; height:42px; stroke-width:1.8 }
+.statusline{ margin:-8px 0 0; display:flex; gap:8px; align-items:baseline; font:13px/1.45 var(--f-mono); color:var(--muted); min-width:0 }
+.statusline::before{ content:""; flex:none; width:7px; height:7px; border-radius:50%; background:var(--line); transform:translateY(-1px) }
+.statusline.on{ color:var(--ink) }
+.statusline.on::before{ background:var(--accent) }
+.defs{ position:absolute; width:0; height:0; overflow:hidden }
+.sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap }
+
+/* ---------- mock window contents (400px wide base; height follows the window's shape) ---------- */
+.wt{ position:relative; width:100%; height:100%; overflow:hidden; background:#f6f6f8; color:#222; font-family:var(--f-mac) }
+.wt.dk{ background:#1b1d23; color:#ddd }
+.wt.k-term-w{ background:#0c0e11 }
+.wt.k-notes-w{ background:#fbf3cf }
+.wt-bar{ height:22px; display:flex; align-items:center; gap:5px; padding:0 9px; background:rgba(0,0,0,.045); border-bottom:1px solid rgba(0,0,0,.07) }
+.wt.dk .wt-bar{ background:rgba(255,255,255,.04); border-color:rgba(255,255,255,.06) }
+.wt-bar i{ width:8px; height:8px; border-radius:50%; background:#ff5f57; flex:none }
+.wt-bar i:nth-child(2){ background:#febc2e } .wt-bar i:nth-child(3){ background:#28c840 }
+.wt-bar span{ flex:1; text-align:center; font-size:8.5px; font-weight:600; opacity:.6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-right:30px }
+.wb{ position:absolute; left:0; right:0; top:22px; bottom:0; display:flex; overflow:hidden }
+.wb i{ display:block; height:5px; border-radius:3px }
+.cd-side{ width:78px; padding:9px 8px; display:grid; gap:7px; align-content:start; background:rgba(255,255,255,.03); border-right:1px solid rgba(255,255,255,.05) }
+.cd-side i{ background:rgba(255,255,255,.13) }
+.cd-main{ flex:1; padding:9px 10px; display:grid; gap:6.5px; align-content:start }
+.cd-ln{ display:flex; align-items:center }
+.cd-ln b{ width:9px; height:4px; border-radius:2px; background:rgba(255,255,255,.12); flex:none; margin-right:9px }
+.cd-ln span{ display:flex; gap:4px }
+.c0{ background:#c792ea } .c1{ background:#82aaff } .c2{ background:#c3e88d } .c3{ background:rgba(255,255,255,.34) }
+.k-web{ flex-direction:column; padding:8px 12px; gap:8px }
+.wb-url{ height:10px; width:55%; margin:0 auto; border-radius:5px; background:rgba(0,0,0,.07); flex:none }
+.wb-hero{ height:72px; border-radius:6px; flex:none }
+.wb-lines{ display:grid; gap:5px } .wb-lines i{ background:rgba(0,0,0,.13) }
+.wb-cards{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; flex:1; min-height:30px } .wb-cards i{ height:auto; border-radius:5px; background:rgba(0,0,0,.06) }
+.k-term{ flex-direction:column; padding:9px 11px; gap:6px }
+.tm-ln{ display:flex; gap:5px; align-items:center } .tm-ln b{ width:6px; height:5px; background:#5fd38d; border-radius:1px; flex:none }
+.tm-ln i{ background:rgba(230,230,230,.5) } .tm-ln i.g{ background:#5fd38d }
+.ch-side{ width:92px; background:#3a2a52; padding:10px 8px; display:grid; gap:7px; align-content:start } .ch-side i{ background:rgba(255,255,255,.26) }
+.ch-main{ flex:1; padding:11px; display:grid; gap:11px; align-content:start }
+.ch-msg{ display:flex; gap:7px } .ch-msg b{ width:16px; height:16px; border-radius:5px; flex:none } .ch-msg div{ flex:1; display:grid; gap:4px } .ch-msg i{ background:rgba(0,0,0,.14) }
+.ml-list{ width:150px; border-right:1px solid rgba(0,0,0,.07); display:grid; align-content:start }
+.ml-row{ padding:7px 9px; display:grid; gap:4px; border-bottom:1px solid rgba(0,0,0,.05) } .ml-row i{ background:rgba(0,0,0,.18) }
+.ml-row.on{ background:#2f7cf6 } .ml-row.on i{ background:rgba(255,255,255,.75) }
+.ml-read{ flex:1; padding:12px; display:grid; gap:6px; align-content:start } .ml-read i{ background:rgba(0,0,0,.12) }
+.nt{ flex:1; padding:12px 16px; display:grid; gap:7px; align-content:start } .nt i{ background:rgba(90,70,10,.22) } .nt i:first-child{ height:9px; background:rgba(90,70,10,.42) }
+.dz{ flex:1; background:#d9dbe0; display:grid; place-items:center }
+.dz-art{ position:relative; width:62%; height:80%; background:#fff; border-radius:3px; box-shadow:0 2px 6px rgba(0,0,0,.12) }
+.dz-art b{ position:absolute; left:12%; top:16%; width:30%; aspect-ratio:1; border-radius:50% }
+.dz-art s{ position:absolute; right:12%; top:30%; width:38%; height:42%; border-radius:8px }
+.dz-art i{ position:absolute; left:12%; bottom:12%; width:44%; background:rgba(0,0,0,.14) }
+.mu-side{ width:84px; padding:10px 8px; display:grid; gap:7px; align-content:start; background:rgba(255,255,255,.03) } .mu-side i{ background:rgba(255,255,255,.14) }
+.mu-main{ flex:1; padding:14px; display:flex; gap:14px }
+.mu-art{ width:120px; height:120px; border-radius:8px; flex:none; box-shadow:0 8px 18px rgba(0,0,0,.4) }
+.mu-rows{ flex:1; display:grid; gap:9px; align-content:start } .mu-rows i{ background:rgba(255,255,255,.2) }
+.cl{ flex:1; padding:10px; display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:1fr; gap:3px }
+.cl > div{ border-radius:3px; background:rgba(0,0,0,.04); padding:3px; display:grid; align-content:start; gap:3px } .cl > div i{ height:7px }
+.fl{ flex:1; padding:14px; display:grid; grid-template-columns:repeat(auto-fill,minmax(52px,1fr)); gap:12px; align-content:start }
+.fl > div{ display:grid; justify-items:center; gap:4px } .fl b{ width:38px; height:28px; border-radius:4px; background:#6db6f2 } .fl i{ width:32px; background:rgba(0,0,0,.14) }
+.vd{ flex:1; padding:8px; display:grid; grid-template-columns:1fr 1fr; grid-auto-rows:1fr; gap:6px; background:#111317 }
+.vd > div{ border-radius:6px; background:#23262d; display:grid; place-items:center } .vd b{ width:48px; height:48px; border-radius:50% }
+
+/* ---------- keycap pad ---------- */
+.deck{ display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; justify-content:space-between }
+.pad{ display:flex; flex-wrap:wrap; gap:6px; align-items:flex-end }
+.cap{ font:500 12px/1 var(--f-mac); color:var(--key-ink); background:var(--key); border:1px solid var(--key-edge); border-bottom-width:3px; border-radius:7px; height:38px; min-width:44px; padding:0 11px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:5px }
+.cap small{ font-size:10px; color:var(--muted) }
+.cap.w{ min-width:70px } .cap.xw{ min-width:120px }
+.cap:active, .cap[aria-pressed="true"]{ transform:translateY(2px); border-bottom-width:1px; background:var(--key-down) }
+.cap[aria-pressed="true"]{ border-color:var(--accent); color:var(--accent) }
+.cap:focus-visible{ outline:2px solid var(--accent); outline-offset:2px }
+.arrows{ display:grid; grid-template-columns:repeat(3,40px); grid-template-rows:18px 18px; gap:2px }
+.arrows .cap{ height:18px; min-width:0; padding:0; font-size:10px; border-bottom-width:2px; border-radius:4px }
+.arrows .up{ grid-column:2; grid-row:1 } .arrows .lf{ grid-column:1; grid-row:2 } .arrows .dn{ grid-column:2; grid-row:2 } .arrows .rt{ grid-column:3; grid-row:2 }
+.pad-note{ margin:0; font-size:13px; color:var(--muted); max-width:46ch }
+
+/* ---------- knobs, keys, log ---------- */
+.cols{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:20px; align-items:start }
+@media (max-width:880px){ .cols{ grid-template-columns:1fr } }
+.card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px 20px 20px; display:grid; gap:16px; min-width:0 }
+.card-head{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 14px }
+.readout{ margin:0; font:12.5px/1.4 var(--f-mono); color:var(--muted); font-variant-numeric:tabular-nums }
+.readout b{ color:var(--ink); font-weight:500 }
+.btn{ font:500 13px/1 var(--f-body); color:var(--ink); background:var(--raise); border:1px solid var(--line); border-radius:8px; padding:8px 12px; cursor:pointer; box-shadow:0 1px 2px var(--shadow) }
+.btn:hover{ border-color:var(--muted) }
+.btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px }
+.btns{ display:flex; gap:8px; flex-wrap:wrap }
+.knob-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:16px 24px }
+.group-label{ margin:4px 0 -4px; font:500 11px/1.4 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted) }
+.rng{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 10px; align-items:baseline; min-width:0 }
+.rng label{ font-size:13px }
+.rng output{ font:12.5px var(--f-mono); color:var(--muted); font-variant-numeric:tabular-nums }
+.rng input{ grid-column:1/-1; width:100%; accent-color:var(--accent); margin:2px 0 0 }
+.seg{ border:0; padding:0; margin:0; min-width:0 }
+.seg legend{ font-size:13px; padding:0; margin-bottom:6px }
+.opts{ display:flex; flex-wrap:wrap; gap:3px; padding:3px; border-radius:9px; background:var(--ground); border:1px solid var(--line) }
+.opts input{ position:absolute; opacity:0; width:1px; height:1px; pointer-events:none }
+.opts label{ flex:1 1 auto; text-align:center; padding:6px 10px; border-radius:7px; font-size:12.5px; color:var(--muted); cursor:pointer; white-space:nowrap }
+.opts input:checked + label{ background:var(--raise); color:var(--ink); box-shadow:0 1px 2px var(--shadow), 0 0 0 1px var(--line) }
+.opts input:focus-visible + label{ outline:2px solid var(--accent); outline-offset:1px }
+.checks{ display:grid; gap:8px; align-content:start }
+.chk{ display:flex; gap:8px; align-items:flex-start; font-size:13px }
+.chk input{ accent-color:var(--accent); margin:3px 0 0 }
+.keys{ margin:0; display:grid }
+.keys > div{ display:grid; grid-template-columns:minmax(112px,auto) minmax(0,1fr); gap:12px; padding:7px 0; border-top:1px solid var(--line); align-items:baseline }
+.keys > div:first-child{ border-top:0 }
+.keys dt{ font-size:12.5px; color:var(--muted); white-space:nowrap }
+.keys dd{ margin:0; font-size:13.5px }
+.log{ list-style:none; margin:0; padding:0; display:grid }
+.log li{ display:grid; grid-template-columns:62px minmax(0,1fr) auto; gap:10px; align-items:baseline; padding:7px 0; border-top:1px solid var(--line); font-size:13.5px }
+.log li:first-child{ border-top:0 }
+.log .lv{ font:500 11.5px var(--f-mono); color:var(--muted) }
+.log .lt{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.log .lt em{ font-style:normal; color:var(--muted) }
+.log .lm{ font:12px var(--f-mono); color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap }
+.log li.empty{ display:block; color:var(--muted) }
+.judge{ display:grid; gap:12px; padding-top:6px }
+.judge ul{ margin:0; padding-left:18px; columns:2 320px; column-gap:40px }
+.judge li{ break-inside:avoid; margin-bottom:10px; max-width:60ch }
+.judge li b{ font-weight:600 }
+.foot{ margin:0; font-size:12.5px; color:var(--muted); max-width:80ch }
+@media (prefers-reduced-motion: reduce){ .caret{ animation:none } }
+</style>
+
+<main class="wrap">
+  <header class="head">
+    <p class="eyebrow">Prototype 0.3 · workspaces, windows and apps in one ring</p>
+    <h1>Axle Workspaces</h1>
+    <p class="lede">A workspace is a saved window setup, such as an editor on the left half and a browser on the right. A ring of workspaces hugs the notch. Turn it to see each one full size, then press <kbd>return</kbd> to bring it back. Press <kbd>▼</kbd> to pick a single window, snap it to half the screen, or send it to another workspace. Everything shown is simulated.</p>
+  </header>
+
+  <section class="stage" aria-label="Simulated MacBook display">
+    <div class="viewport" id="viewport" tabindex="0" role="application" aria-label="Simulated screen. Press Option Space to open the workspace ring, or hold Option and press Tab to switch windows.">
+      <div class="screen dusk" id="screen">
+        <div class="wall"></div>
+        <div id="desk"></div>
+        <div class="menubar">
+          <div class="mb-l"><span class="mb-logo"></span><b id="mb-app">Code Editor</b><span>File</span><span>Edit</span><span>View</span><span>Go</span><span>Window</span><span>Help</span></div>
+          <div class="mb-r">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 9a14 14 0 0 1 19 0M5.8 12.4a9 9 0 0 1 12.4 0M9.1 15.8a4.2 4.2 0 0 1 5.8 0"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7.5" width="18" height="9" rx="2.6"/><rect x="4" y="9.5" width="11" height="5" rx="1.2" fill="currentColor" stroke="none"/><path d="M22 10.8v2.4"/></svg>
+            <span>Sun 11 Oct</span><span>9:41</span>
+          </div>
+        </div>
+        <div class="scrim" id="scrim"></div>
+        <div class="layer" id="goo-layer"><div class="notch"></div></div>
+        <div class="layer" id="face-layer"></div>
+      </div>
+    </div>
+    <svg class="defs" aria-hidden="true" focusable="false">
+      <filter id="goo" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -12" result="goo"/>
+        <feBlend in="SourceGraphic" in2="goo"/>
+      </filter>
+    </svg>
+    <div class="sr" id="live" aria-live="polite"></div>
+  </section>
+
+  <p class="statusline" id="status">Click the screen to use your keyboard</p>
+
+  <div class="deck">
+    <div class="pad" id="pad" aria-label="On-screen keys">
+      <button type="button" class="cap w" data-k="Alt" aria-pressed="false">⌥ <small>hold</small></button>
+      <button type="button" class="cap w" data-k="Shift" aria-pressed="false">⇧ <small>hold</small></button>
+      <button type="button" class="cap" data-k="Tab">tab</button>
+      <button type="button" class="cap xw" data-k="Space">space</button>
+      <div class="arrows">
+        <button type="button" class="cap up" data-k="ArrowUp" aria-label="Up">▲</button>
+        <button type="button" class="cap lf" data-k="ArrowLeft" aria-label="Left">◀</button>
+        <button type="button" class="cap dn" data-k="ArrowDown" aria-label="Down">▼</button>
+        <button type="button" class="cap rt" data-k="ArrowRight" aria-label="Right">▶</button>
+      </div>
+      <button type="button" class="cap" data-k="Backspace">delete</button>
+      <button type="button" class="cap w" data-k="Enter">return</button>
+      <button type="button" class="cap" data-k="Escape">esc</button>
+    </div>
+    <p class="pad-note">No keyboard? Tap <kbd>⌥</kbd> or <kbd>⇧</kbd> to hold it down and tap again to let go. For example, tap <kbd>⇧</kbd>, then <kbd>◀</kbd>, to snap a window to the left half.</p>
+  </div>
+
+  <div class="cols">
+    <section class="card" aria-labelledby="knobs-h">
+      <div class="card-head">
+        <h2 id="knobs-h">Shape and motion</h2>
+        <p class="readout" id="readout">Open the ring to measure its entrance</p>
+        <div class="btns"><button type="button" class="btn" id="replay">Replay entrance</button><button type="button" class="btn" id="reset">Reset workspaces</button></div>
+      </div>
+      <div class="knob-grid">
+        <fieldset class="seg">
+          <legend>Path around the notch</legend>
+          <div class="opts">
+            <input type="radio" name="shape" id="shape-hug" value="hug"><label for="shape-hug">Hug the notch</label>
+            <input type="radio" name="shape" id="shape-ellipse" value="ellipse"><label for="shape-ellipse">Ellipse</label>
+            <input type="radio" name="shape" id="shape-circle" value="circle"><label for="shape-circle">Circle</label>
+          </div>
+        </fieldset>
+        <div class="rng"><label for="gap">Distance from the notch</label><output id="o-gap" for="gap"></output><input type="range" id="gap" min="30" max="140" step="2"></div>
+        <fieldset class="seg">
+          <legend>Preview</legend>
+          <div class="opts">
+            <input type="radio" name="layout" id="layout-big" value="big"><label for="layout-big">Biggest</label>
+            <input type="radio" name="layout" id="layout-thin" value="thin"><label for="layout-thin">Thin glances</label>
+            <input type="radio" name="layout" id="layout-wide" value="wide"><label for="layout-wide">Wide glances</label>
+          </div>
+        </fieldset>
+        <fieldset class="seg">
+          <legend>When a workspace opens</legend>
+          <div class="opts">
+            <input type="radio" name="mode" id="mode-front" value="front"><label for="mode-front">Bring it to front</label>
+            <input type="radio" name="mode" id="mode-hide" value="hide"><label for="mode-hide">Hide everything else</label>
+          </div>
+        </fieldset>
+        <fieldset class="seg">
+          <legend>When you switch</legend>
+          <div class="opts">
+            <input type="radio" name="fly" id="fly-on" value="on"><label for="fly-on">Windows fly into place</label>
+            <input type="radio" name="fly" id="fly-off" value="off"><label for="fly-off">Instant</label>
+          </div>
+        </fieldset>
+        <div class="rng"><label for="speed">Spring speed</label><output id="o-speed" for="speed"></output><input type="range" id="speed" min="150" max="900" step="10"></div>
+        <div class="rng"><label for="bounce">Bounce</label><output id="o-bounce" for="bounce"></output><input type="range" id="bounce" min="0" max="60" step="2"></div>
+        <div class="rng"><label for="delay">Hold-mode show delay</label><output id="o-delay" for="delay"></output><input type="range" id="delay" min="0" max="250" step="10"></div>
+        <fieldset class="seg">
+          <legend>Wallpaper</legend>
+          <div class="opts">
+            <input type="radio" name="wall" id="wall-dusk" value="dusk"><label for="wall-dusk">Dark</label>
+            <input type="radio" name="wall" id="wall-day" value="day"><label for="wall-day">Light</label>
+          </div>
+        </fieldset>
+        <div class="checks">
+          <label class="chk"><input type="checkbox" id="slow"> Slow motion ×6</label>
+          <label class="chk"><input type="checkbox" id="reduce"> Reduce motion (fade only)</label>
+        </div>
+      </div>
+    </section>
+
+    <div style="display:grid; gap:20px; min-width:0">
+      <section class="card" aria-labelledby="keys-h">
+        <h2 id="keys-h">Keys</h2>
+        <dl class="keys">
+          <div><dt><kbd>⌥</kbd>&#8202;<kbd>space</kbd></dt><dd>Open the workspace ring. Plain <kbd>space</kbd> works here too.</dd></div>
+          <div><dt><kbd>◀</kbd>&#8202;<kbd>▶</kbd> · <kbd>1</kbd>–<kbd>6</kbd></dt><dd>Turn the ring to see another workspace, or jump to one by number. Clicking a side glance turns the ring too.</dd></div>
+          <div><dt><kbd>return</kbd></dt><dd>Bring that workspace back: open missing apps and put every window in its place.</dd></div>
+          <div><dt><kbd>▼</kbd> then <kbd>◀</kbd>&#8202;<kbd>▶</kbd></dt><dd>Pick one window in the preview. <kbd>return</kbd> focuses it. <kbd>▲</kbd> goes back to the ring.</dd></div>
+          <div><dt><kbd>⇧</kbd> + arrows</dt><dd>Snap the picked window: left half, right half, full, centered.</dd></div>
+          <div><dt><kbd>⇧</kbd> + <kbd>1</kbd>–<kbd>6</kbd> · <kbd>⇧</kbd> <kbd>delete</kbd></dt><dd>Send the window to workspace 1–6 · close it.</dd></div>
+          <div><dt><kbd>⌥</kbd> hold + <kbd>tab</kbd></dt><dd>Recent windows across all workspaces. Let go to switch. <kbd>⌥</kbd>&#8202;<kbd>`</kbd> cycles only the current app's windows.</dd></div>
+          <div><dt>Any letter</dt><dd>Search every window title and workspace name.</dd></div>
+        </dl>
+      </section>
+      <section class="card" aria-labelledby="log-h">
+        <h2 id="log-h">Switch log</h2>
+        <ol class="log" id="log"></ol>
+      </section>
+    </div>
+  </div>
+
+  <section class="judge" aria-labelledby="judge-h">
+    <h2 id="judge-h">What to judge</h2>
+    <ul>
+      <li><b>Biggest or glances.</b> Switch between the three preview options while turning the ring. Thin glances keep the preview at full size. Wide glances shrink it by about a sixth.</li>
+      <li><b>Peeking islands.</b> The two islands at the ends of the ring sit half behind the top edge, blurred. Is that enough of a hint that more workspaces are there?</li>
+      <li><b>Instead of Mission Control.</b> Turn the ring with <kbd>◀</kbd>&#8202;<kbd>▶</kbd>. Is seeing each workspace full size, without hovering, the thing you were missing?</li>
+      <li><b>Front or hide.</b> Open "Design review", then "Comms", once in each mode. The first is what the plan covers early. The second is the full window-manager version you said is best eventually.</li>
+      <li><b>Sending a window.</b> Pick a window, press <kbd>⇧</kbd> <kbd>2</kbd>, and watch it fly into that island. Is it obvious where it went?</li>
+      <li><b>Arranging.</b> Are halves, full and centered enough, or do you need thirds and quarters?</li>
+      <li><b>Finding.</b> Hold <kbd>⌥</kbd> and tap <kbd>tab</kbd>. The ring turns to whichever workspace holds the window. Does that answer "where is it?" faster than searching?</li>
+    </ul>
+    <p class="foot">"Weekly sync" holds apps that aren't open yet, so bringing it back launches them. Windows that belong to no workspace live on the dotted island. Thumbnails are drawn placeholders. The real app would capture window images with Screen Recording access and arrange windows through Accessibility.</p>
+  </section>
+</main>
+
+<script>
+(() => {
+'use strict';
+const W = 1280, CX = 640, OFF = 40, TBW = 400, ISL = 56, MB = 34, WH = 766, GAP = 6;
+
+const GLY = {
+  browser: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.8 2.9 2.8 14.1 0 17M12 3.5c-2.8 2.9-2.8 14.1 0 17"/>',
+  editor: '<path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/>',
+  terminal: '<path d="M5.5 8l4 4-4 4M12.5 16.5h6"/>',
+  mail: '<rect x="3.5" y="6" width="17" height="12.5" rx="2"/><path d="M4 7.5l8 5.5 8-5.5"/>',
+  chat: '<path d="M5.5 5h13A1.5 1.5 0 0 1 20 6.5v8a1.5 1.5 0 0 1-1.5 1.5H11l-4.5 3.5V16h-1A1.5 1.5 0 0 1 4 14.5v-8A1.5 1.5 0 0 1 5.5 5z"/>',
+  notes: '<rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4"/>',
+  design: '<circle cx="9" cy="9" r="5"/><rect x="10.5" y="10.5" width="9" height="9" rx="1.5"/>',
+  music: '<path d="M9 17.5V6l10-2v11.5"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="15.5" r="2.5"/>',
+  calendar: '<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+  files: '<path d="M3.5 7.5a2 2 0 0 1 2-2h3.8l2 2h7.2a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
+  video: '<rect x="3.5" y="6.5" width="11.5" height="11" rx="2"/><path d="M15 10.5l5.5-3v9l-5.5-3z"/>'
+};
+const APPS = {
+  browser: { name: 'Browser', c: ['#5ab0ff', '#1f5fd1'], k: 'web' },
+  editor: { name: 'Code Editor', c: ['#6e93ff', '#3446c9'], k: 'code' },
+  terminal: { name: 'Terminal', c: ['#4a5059', '#16181c'], k: 'term' },
+  chat: { name: 'Chat', c: ['#63d28f', '#1e9a55'], k: 'chat' },
+  mail: { name: 'Mail', c: ['#5cb8ff', '#2878e0'], k: 'mail' },
+  notes: { name: 'Notes', c: ['#ffd463', '#f0a12a'], k: 'notes' },
+  design: { name: 'Design Tool', c: ['#ff8a70', '#c93a6c'], k: 'design' },
+  music: { name: 'Music', c: ['#ff6a85', '#d42a5c'], k: 'music' },
+  calendar: { name: 'Calendar', c: ['#ff7466', '#de3b30'], k: 'cal' },
+  files: { name: 'Files', c: ['#72c6ff', '#2e8ae2'], k: 'files' },
+  video: { name: 'Video Call', c: ['#55d4c8', '#1b8b98'], k: 'video' }
+};
+
+const $ = (s) => document.querySelector(s);
+const vp = $('#viewport'), screenEl = $('#screen'), gooL = $('#goo-layer'), faceL = $('#face-layer'), deskL = $('#desk'),
+  statusEl = $('#status'), live = $('#live'), scrim = $('#scrim');
+
+const cfg = { shape: 'hug', gap: 44, layout: 'thin', mode: 'hide', fly: 'on', speed: 420, bounce: 16, stagger: 12, delay: 0, slow: false,
+  reduce: matchMedia('(prefers-reduced-motion: reduce)').matches, wall: 'dusk' };
+try { Object.assign(cfg, JSON.parse(localStorage.getItem('axle-ws-cfg-3') || '{}')); } catch (e) { /* storage unavailable */ }
+if (!['hug', 'ellipse', 'circle'].includes(cfg.shape)) cfg.shape = 'hug';
+if (!['big', 'thin', 'wide'].includes(cfg.layout)) cfg.layout = 'thin';
+const save = () => { try { localStorage.setItem('axle-ws-cfg-3', JSON.stringify(cfg)); } catch (e) { /* ignore */ } };
+
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const now = () => performance.now();
+const slowF = () => (cfg.slow ? 6 : 1);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const iconHTML = (id, size) => { const a = APPS[id]; return `<span class="ico ${size}" style="background:linear-gradient(160deg,${a.c[0]},${a.c[1]})"><svg viewBox="0 0 24 24" aria-hidden="true">${GLY[id]}</svg></span>`; };
+
+/* ---------- mock window contents ---------- */
+function rng(seed) { let s = 7; for (const ch of seed) s = (s * 31 + ch.charCodeAt(0)) | 0; s = Math.abs(s) || 1; return () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; }; }
+const bars = (r, n, lo, hi) => Array.from({ length: n }, () => `<i style="width:${lo + Math.floor(r() * (hi - lo))}%"></i>`).join('');
+const hue = (r) => Math.floor(r() * 360);
+const BODY = {
+  code: (r) => `<div class="cd-side">${bars(r, 14, 45, 95)}</div><div class="cd-main">${Array.from({ length: 30 }, () => {
+    const n = 1 + Math.floor(r() * 3);
+    return `<div class="cd-ln"><b></b><span style="margin-left:${Math.floor(r() * 3) * 12}px">${Array.from({ length: n }, () => `<i class="c${Math.floor(r() * 4)}" style="width:${14 + Math.floor(r() * 56)}px"></i>`).join('')}</span></div>`;
+  }).join('')}</div>`,
+  web: (r) => { const h = hue(r); return `<div class="wb-url"></div><div class="wb-hero" style="background:linear-gradient(120deg,hsl(${h} 75% 62%),hsl(${(h + 50) % 360} 70% 50%))"></div><div class="wb-lines">${bars(r, 4, 40, 95)}</div><div class="wb-cards"><i></i><i></i><i></i></div>`; },
+  term: (r) => Array.from({ length: 34 }, (_, i) => { const p = i % 4 === 0; return `<div class="tm-ln">${p ? '<b></b>' : ''}<i class="${p ? 'g' : ''}" style="width:${18 + Math.floor(r() * 62)}%"></i></div>`; }).join(''),
+  chat: (r) => `<div class="ch-side">${bars(r, 14, 40, 90)}</div><div class="ch-main">${Array.from({ length: 9 }, () => `<div class="ch-msg"><b style="background:hsl(${hue(r)} 60% 62%)"></b><div>${bars(r, 1 + Math.floor(r() * 2), 30, 95)}</div></div>`).join('')}</div>`,
+  mail: (r) => `<div class="ml-list">${Array.from({ length: 12 }, (_, i) => `<div class="ml-row${i === 1 ? ' on' : ''}">${bars(r, 2, 40, 95)}</div>`).join('')}</div><div class="ml-read">${bars(r, 18, 45, 98)}</div>`,
+  notes: (r) => `<div class="nt"><i style="width:48%"></i>${bars(r, 22, 40, 96)}</div>`,
+  design: (r, a) => `<div class="dz"><div class="dz-art"><b style="background:${a.c[0]}"></b><s style="background:hsl(${hue(r)} 70% 60%)"></s><i></i></div></div>`,
+  music: (r) => { const h = hue(r); return `<div class="mu-side">${bars(r, 9, 40, 90)}</div><div class="mu-main"><div class="mu-art" style="background:linear-gradient(135deg,hsl(${h} 80% 62%),hsl(${(h + 70) % 360} 70% 38%))"></div><div class="mu-rows">${bars(r, 14, 40, 95)}</div></div>`; },
+  cal: (r) => `<div class="cl">${Array.from({ length: 35 }, () => `<div>${r() < 0.32 ? `<i style="background:hsl(${hue(r)} 65% 62%)"></i>` : ''}</div>`).join('')}</div>`,
+  files: (r) => `<div class="fl">${Array.from({ length: 18 }, () => `<div><b style="filter:hue-rotate(${Math.floor(r() * 40) - 20}deg)"></b><i></i></div>`).join('')}</div>`,
+  video: (r) => `<div class="vd">${[0, 1, 2, 3].map(() => `<div><b style="background:hsl(${hue(r)} 45% 60%)"></b></div>`).join('')}</div>`
+};
+const DARK = new Set(['code', 'term', 'music', 'video']);
+const KCLASS = { web: 'k-web', term: 'k-term' };
+function winHTML(w) {
+  const a = APPS[w.app], r = rng(w.uid + w.t);
+  return `<div class="wt k-${w.k}-w${DARK.has(w.k) ? ' dk' : ''}"><div class="wt-bar"><i></i><i></i><i></i><span>${esc(w.t)}</span></div><div class="wb ${KCLASS[w.k] || ''}">${BODY[w.k](r, a)}</div></div>`;
+}
+
+/* ---------- workspaces (example data) ---------- */
+const S = { ws: [], active: 'notch', recent: [], looseFront: new Set(), open: false, shown: false, mode: null, level: 'ring', wsi: 0, prevWsi: 0,
+  wsel: null, ri: 0, dir: 1, query: '', holdList: [], hi: 0, keys: 0, openedAt: 0, timer: 0, latch: false, shift: false, log: [], justOpened: false, measure: 0, lastLive: '' };
+function seed() {
+  let n = 0;
+  const mk = (app, t, f, open = true) => ({ uid: 'w' + n++, app, t, k: APPS[app].k, f, open, launching: false });
+  S.ws = [
+    { id: 'notch', name: 'Notch app', wins: [mk('editor', 'notch-islands — IslandsPanel.swift', [0, 0, 0.5, 1]), mk('browser', 'NSPanel reference — developer docs', [0.5, 0, 0.5, 0.62]), mk('terminal', '~/notch-islands — swift build', [0.5, 0.62, 0.5, 0.38])] },
+    { id: 'review', name: 'Design review', wins: [mk('design', 'Islands — motion frames', [0, 0, 0.66, 1]), mk('chat', '#design-review', [0.66, 0, 0.34, 1])] },
+    { id: 'comms', name: 'Comms', wins: [mk('mail', 'Inbox — 3 unread', [0, 0, 0.5, 1]), mk('calendar', 'Week of 12 October', [0.5, 0, 0.5, 1])] },
+    { id: 'sync', name: 'Weekly sync', wins: [mk('video', 'Team call', [0, 0, 0.62, 1], false), mk('notes', 'Sync agenda', [0.62, 0, 0.38, 1], false)] },
+    { id: 'writing', name: 'Writing', wins: [mk('notes', 'Product brief — draft', [0, 0, 0.58, 1]), mk('browser', 'Style guide — docs', [0.58, 0, 0.42, 1])] },
+    { id: 'research', name: 'Research', wins: [mk('browser', 'Notch apps compared', [0, 0, 0.5, 1]), mk('browser', 'niri — scrollable tiling', [0.5, 0, 0.5, 0.55]), mk('files', 'Screenshots', [0.5, 0.55, 0.5, 0.45])] },
+    { id: 'loose', name: 'Not in a workspace', loose: true, wins: [mk('music', 'Now Playing', [0.55, 0.08, 0.4, 0.5]), mk('files', 'Downloads', [0.06, 0.12, 0.44, 0.56]), mk('browser', 'Motion references', [0.2, 0.05, 0.58, 0.8])] }
+  ];
+  S.recent = ['w0', 'w1', 'w2', 'w4', 'w3', 'w5', 'w6', 'w14', 'w15', 'w16', 'w9', 'w10', 'w11', 'w12', 'w13'];
+  S.active = 'notch';
+  S.looseFront = new Set();
+}
+const allWins = () => S.ws.flatMap((ws) => ws.wins);
+const winById = (uid) => allWins().find((w) => w.uid === uid);
+const wsOfWin = (w) => S.ws.find((ws) => ws.wins.includes(w));
+const rank = (uid) => { const i = S.recent.indexOf(uid); return i < 0 ? 99 : i; };
+const recentOpen = () => S.recent.map(winById).filter((w) => w && w.open);
+function previewWins(ws) {
+  return ws.loose ? ws.wins.slice().sort((a, b) => rank(a.uid) - rank(b.uid)) : ws.wins.slice().sort((a, b) => (a.f[0] - b.f[0]) || (a.f[1] - b.f[1]));
+}
+function score(text, q) {
+  const n = text.toLowerCase();
+  if (n.startsWith(q)) return 100;
+  if (n.split(/[\s—\-./~#]+/).some((p) => p && p.startsWith(q))) return 80;
+  if (n.includes(q)) return 50;
+  return -1;
+}
+function results() {
+  const q = S.query.trim().toLowerCase();
+  if (!q) return [];
+  const out = [];
+  S.ws.forEach((ws) => { if (ws.loose) return; const s = score(ws.name, q); if (s >= 0) out.push({ type: 'ws', ws, s: s + 6 }); });
+  allWins().forEach((w) => { const s = Math.max(score(APPS[w.app].name, q), score(w.t, q) - 4); if (s >= 0) out.push({ type: 'win', w, s: s - rank(w.uid) * 0.2 }); });
+  return out.sort((a, b) => b.s - a.s).slice(0, 6);
+}
+function glyph(ws, gw = 32, gh = 20) {
+  if (ws.loose) return `<svg class="gly" viewBox="0 0 ${gw} ${gh}" width="${gw}" height="${gh}" aria-hidden="true"><rect x="3" y="7" width="8" height="7" rx="1.5" class="off"/><rect x="12.5" y="3" width="8" height="7" rx="1.5" class="off"/><rect x="21" y="9" width="8" height="7" rx="1.5" class="off"/></svg>`;
+  const rs = ws.wins.map((w) => { const [x, y, ww, hh] = w.f; return `<rect x="${(x * gw + 0.8).toFixed(1)}" y="${(y * gh + 0.8).toFixed(1)}" width="${Math.max(1, ww * gw - 1.6).toFixed(1)}" height="${Math.max(1, hh * gh - 1.6).toFixed(1)}" rx="1.4"${w.open ? '' : ' class="off"'}/>`; }).join('');
+  return `<svg class="gly" viewBox="0 0 ${gw} ${gh}" width="${gw}" height="${gh}" aria-hidden="true">${rs || `<rect x="1" y="1" width="${gw - 2}" height="${gh - 2}" rx="2" class="off"/>`}</svg>`;
+}
+
+/* ---------- geometry ---------- */
+/* The ring is a track: u = 0 sits right under the notch, positive u runs right then up past the top edge, negative u mirrors it. */
+const SP = 66; // spacing between islands along the track
+let PATH = null;
+function buildPath() {
+  const m = cfg.gap, hw = 95 + m, pts = [];
+  if (cfg.shape === 'hug') {
+    const yb = MB + m, r = Math.min(46, m + 8);
+    for (let x = 0; x < hw - r; x += 2) pts.push([CX + x, yb]);
+    for (let a = 90; a >= 0; a -= 3) { const t = (a * Math.PI) / 180; pts.push([CX + hw - r + r * Math.cos(t), yb - r + r * Math.sin(t)]); }
+  } else if (cfg.shape === 'ellipse') {
+    const rx = hw + 80, ry = MB + m;
+    for (let a = 90; a >= 0; a -= 1) { const t = (a * Math.PI) / 180; pts.push([CX + rx * Math.cos(t), ry * Math.sin(t)]); }
+  } else {
+    const R = hw, cy = MB + m - R;
+    for (let a = 90; a >= 0; a -= 1) { const t = (a * Math.PI) / 180; pts.push([CX + R * Math.cos(t), cy + R * Math.sin(t)]); }
+  }
+  const last = pts[pts.length - 1];
+  for (let y = last[1] - 3; y > -320; y -= 3) pts.push([last[0], y]);
+  const L = [0];
+  for (let i = 1; i < pts.length; i++) L.push(L[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  PATH = { pts, L };
+}
+function pathPoint(u) {
+  const { pts, L } = PATH, side = u < 0 ? -1 : 1, a = Math.abs(u), end = L.length - 1;
+  if (a >= L[end]) return { x: CX + side * (pts[end][0] - CX), y: pts[end][1] - (a - L[end]) };
+  let lo = 0, hi = end;
+  while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (L[mid] <= a) lo = mid; else hi = mid; }
+  const t = (a - L[lo]) / (L[hi] - L[lo] || 1);
+  const x = pts[lo][0] + (pts[hi][0] - pts[lo][0]) * t, y = pts[lo][1] + (pts[hi][1] - pts[lo][1]) * t;
+  return { x: CX + side * (x - CX), y };
+}
+const PGAP = 28; // space between the main preview and a side glance
+function geo() {
+  const iy = pathPoint(0).y, top = iy + 52;
+  // the preview keeps the screen's 16:10 shape, so its height, not its width, usually limits it
+  const maxW = Math.min(W - 24, (800 - 10 - top) / 0.625);
+  let pvW = maxW;
+  if (cfg.layout === 'wide') pvW = Math.min(maxW, W - 2 * (170 + PGAP));
+  else if (cfg.layout === 'thin') pvW = Math.min(maxW, W - 2 * (Math.max(56, (W - maxW) / 2 - PGAP) + PGAP));
+  return { iy, top, pvW, pvH: pvW * 0.625, glance: cfg.layout !== 'big' };
+}
+// d = 0 is the main preview; d = -1 / +1 are the side glances, mostly off screen
+function frame(d, g) {
+  if (d === 0) return { x0: CX - g.pvW / 2, y0: g.top, w: g.pvW, h: g.pvH, ms: g.pvW / W };
+  const w = g.pvW * 0.9, h = g.pvH * 0.9, cx = CX + Math.sign(d) * (g.pvW / 2 + PGAP + w / 2);
+  return { x0: cx - w / 2, y0: g.top + (g.pvH - h) / 2, w, h, ms: w / W };
+}
+const miniRect = (f, fr) => ({ x: fr.x0 + (f[0] * W + GAP) * fr.ms, y: fr.y0 + (MB + f[1] * WH + GAP) * fr.ms, w: (f[2] * W - 2 * GAP) * fr.ms, h: (f[3] * WH - 2 * GAP) * fr.ms });
+const deskRect = (f) => ({ x: f[0] * W + GAP, y: MB + f[1] * WH + GAP, w: f[2] * W - 2 * GAP, h: f[3] * WH - 2 * GAP });
+function gridRect(k, n, fr) {
+  const cols = n <= 2 ? Math.max(1, n) : 3, rows = Math.ceil(n / cols), gx = 18, gy = 40, pad = 32;
+  let cw = (fr.w - pad * 2 - (cols - 1) * gx) / cols, ch = cw * 0.625;
+  const maxCh = (fr.h - pad * 2 - (rows - 1) * gy - 70) / rows;
+  if (ch > maxCh) { ch = maxCh; cw = ch / 0.625; }
+  const tw = cols * cw + (cols - 1) * gx, th = rows * ch + (rows - 1) * gy, r = Math.floor(k / cols), c = k % cols;
+  return { x: fr.x0 + (fr.w - tw) / 2 + c * (cw + gx), y: fr.y0 + (fr.h - th) / 2 - 30 + r * (ch + gy), w: cw, h: ch };
+}
+
+/* ---------- spring node engine ---------- */
+const nodes = new Map();
+const ptr = { x: -1, y: -1 }; // last real pointer position, so cards moving under a still cursor never steal the selection
+const DEF = { x: CX, y: 17, w: 0, h: 0, s: 1, rot: 0, o: 0, u: 0, e: 1 };
+const PROPS = ['x', 'y', 'w', 'h', 's', 'rot', 'o', 'u', 'e'];
+function defFrom(sp) {
+  if (sp.kind === 'panel') return { x: CX, y: 2, w: 190, h: 64 };
+  if (sp.track) return { u: 0, e: 0, s: 0.35, o: 0 };
+  return { x: CX, y: 17, w: (sp.t.w || 40) * 0.2, h: (sp.t.h || 24) * 0.2, s: 1, rot: 0, o: 0 };
+}
+function panelSpec(key, t, from, radius) { return { key, kind: 'panel', t: { s: 1, rot: 0, o: 1, ...t }, from, exit: from, blob: { pad: 0, radius } }; }
+function buildEl(sp) {
+  const el = document.createElement('div');
+  el.className = 'nd nd-' + sp.kind;
+  if (sp.kind === 'card') {
+    const it = sp.item;
+    let inner;
+    if (it.type === 'ws') inner = `<div class="frame wscard">${glyph(it.ws, 96, 60)}<b>${esc(it.ws.name)}</b></div>`;
+    else if (it.w.open) inner = `<div class="frame"><div class="thumb">${winHTML(it.w)}</div><span class="badge">${iconHTML(it.w.app, 'xs')}</span></div>`;
+    else inner = `<div class="frame ghost">${iconHTML(it.w.app, 'md')}<small>Opens when you switch</small></div>`;
+    el.innerHTML = inner + '<div class="cap"></div>';
+    if (sp.radius) el.style.setProperty('--r', sp.radius + 'px');
+  } else if (sp.kind === 'island') {
+    el.innerHTML = `<div class="isl-in"><div class="ring"></div><span class="gw"></span><span class="num">${sp.num}</span></div>`;
+  } else if (sp.kind === 'screen') {
+    el.innerHTML = '<span class="mmb"></span><span class="mno"></span>';
+  }
+  return el;
+}
+function createNode(sp) {
+  const n = { key: sp.key, kind: sp.kind, spec: sp, cur: {}, vel: {}, target: {}, leaving: false, el: null, blob: null, thumb: null, th: 0, delayUntil: 0, forceExit: null };
+  const start = S.justOpened ? (sp.from || defFrom(sp)) : (sp.fromOpen || sp.from || defFrom(sp));
+  n.cur = cfg.reduce ? { ...DEF, ...sp.t, o: 0 } : { ...DEF, ...sp.t, ...start };
+  if (sp.kind !== 'panel') {
+    n.el = buildEl(sp);
+    n.thumb = n.el.querySelector('.thumb');
+    faceL.appendChild(n.el);
+    n.el.addEventListener('mousemove', (e) => {
+      if (e.clientX === ptr.x && e.clientY === ptr.y) return;
+      ptr.x = e.clientX; ptr.y = e.clientY;
+      if (!S.open || !S.shown || n.leaving || !n.spec.pick || n.spec.pick.clickOnly) return;
+      if (applyPick(n.spec.pick)) sync();
+    });
+    n.el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!S.open || n.leaving || !n.spec.pick) return;
+      if (n.spec.pick.clickOnly) { S.keys++; if (applyPick(n.spec.pick)) sync(); return; } // side glance: turn the ring, don't switch
+      applyPick(n.spec.pick); S.keys++;
+      commit('click');
+    });
+  }
+  if (sp.blob) {
+    n.blob = document.createElement('div');
+    n.blob.className = 'bl';
+    n.blob.style.borderRadius = sp.blob.radius + 'px';
+    gooL.appendChild(n.blob);
+  }
+  nodes.set(sp.key, n);
+  apply(n);
+  return n;
+}
+function destroyNode(n) { if (n.el) n.el.remove(); if (n.blob) n.blob.remove(); nodes.delete(n.key); }
+function destroyAll() { [...nodes.values()].forEach(destroyNode); }
+function place(n) {
+  const c = n.cur;
+  if (!n.spec.track) return { x: c.x, y: c.y, rot: c.rot };
+  // e blends from the notch's centre (0) out to the track (1), so islands emerge from the notch
+  const p = pathPoint(c.u), e = clamp(c.e, -0.3, 1.3);
+  return { x: CX + (p.x - CX) * e, y: 17 + (p.y - 17) * e, rot: c.rot };
+}
+function apply(n) {
+  const c = n.cur, p = place(n);
+  const w = Math.max(0, c.w), h = Math.max(0, c.h), s = Math.max(0, c.s);
+  if (n.el) {
+    n.el.style.transform = `translate3d(${(p.x - w / 2).toFixed(1)}px,${(p.y - h / 2 + OFF).toFixed(1)}px,0) rotate(${p.rot.toFixed(2)}deg) scale(${s.toFixed(4)})`;
+    n.el.style.width = w.toFixed(1) + 'px';
+    n.el.style.height = h.toFixed(1) + 'px';
+    n.el.style.opacity = clamp(c.o, 0, 1).toFixed(3);
+    if (n.thumb && w > 1) {
+      n.el.style.setProperty('--k', (w / TBW).toFixed(4));
+      const th = (TBW * h) / w;
+      if (Math.abs(th - n.th) > 0.5) { n.thumb.style.height = th.toFixed(1) + 'px'; n.th = th; }
+    }
+  }
+  if (n.blob) {
+    const pad = n.spec.blob.pad || 0, bw = w + pad * 2, bh = h + pad * 2;
+    n.blob.style.transform = `translate3d(${(p.x - bw / 2).toFixed(1)}px,${(p.y - bh / 2 + OFF).toFixed(1)}px,0) scale(${s.toFixed(4)})`;
+    n.blob.style.width = bw.toFixed(1) + 'px';
+    n.blob.style.height = bh.toFixed(1) + 'px';
+    n.blob.style.opacity = n.kind === 'panel' ? '1' : clamp(c.o * 1.6, 0, 1).toFixed(3);
+  }
+}
+function updateEl(n, sp) {
+  if (!n.el) return;
+  n.el.classList.toggle('sel', !!sp.sel);
+  n.el.classList.toggle('cur', !!sp.cur);
+  n.el.classList.toggle('act', !!sp.act);
+  n.el.classList.toggle('peek', !!sp.peek);
+  n.el.style.zIndex = sp.z || 1;
+  if (sp.kind === 'card') {
+    const cap = n.el.querySelector('.cap'), html = sp.cap || '';
+    if (cap._h !== html) { cap.innerHTML = html; cap._h = html; }
+    cap.hidden = !html;
+  } else if (sp.kind === 'label' && n.el._h !== sp.html) {
+    n.el.innerHTML = sp.html; n.el._h = sp.html;
+  } else if (sp.kind === 'island') {
+    const gw = n.el.querySelector('.gw');
+    if (gw._h !== sp.html) { gw.innerHTML = sp.html; gw._h = sp.html; }
+  }
+}
+let raf = 0, lastT = 0;
+function kick() { if (!raf) { lastT = now(); raf = requestAnimationFrame(tick); } }
+function tick(t) {
+  raf = 0;
+  const dt = Math.min(0.05, Math.max(0, (t - lastT) / 1000)) / slowF();
+  lastT = t;
+  const k = cfg.speed, c = 2 * (1 - cfg.bounce / 100) * Math.sqrt(k);
+  const ko = k * 1.6, co = 2 * Math.sqrt(ko);
+  let active = false;
+  for (const n of nodes.values()) {
+    if (n.delayUntil && t < n.delayUntil) { active = true; continue; }
+    let moving = false;
+    for (const p of PROPS) {
+      const tg = n.target[p];
+      if (tg === undefined) continue;
+      let x = n.cur[p], v = n.vel[p] || 0;
+      const kk = p === 'o' ? ko : k, cc = p === 'o' ? co : c;
+      let rem = dt;
+      while (rem > 1e-6) { const h = Math.min(rem, 1 / 240); v += (-kk * (x - tg) - cc * v) * h; x += v * h; rem -= h; }
+      const eps = p === 's' || p === 'o' || p === 'e' ? 0.003 : 0.3;
+      if (Math.abs(x - tg) < eps && Math.abs(v) < eps * 8) { x = tg; v = 0; } else moving = true;
+      n.cur[p] = x; n.vel[p] = v;
+    }
+    apply(n);
+    if (moving) active = true;
+    else if (n.leaving) destroyNode(n);
+  }
+  if (active) kick();
+  else if (S.measure && S.open) {
+    $('#readout').innerHTML = `Last entrance settled in <b>${Math.round(now() - S.measure)} ms</b>${cfg.slow ? ' (×6 slow)' : ''}`;
+    S.measure = 0;
+  }
+}
+
+/* ---------- layout ---------- */
+function wrapD(i, center, n) { const h = Math.floor(n / 2); return ((i - center + n + h) % n) - h; }
+function layout() {
+  if (!S.open || !S.shown) return [];
+  const g = geo(), out = [], n = S.ws.length, searching = !!S.query.trim(), slide = g.pvW * 0.7;
+  // while searching, the ring tucks back into the notch and the search bar takes the selected island's place
+  if (!searching) S.ws.forEach((ws, i) => {
+    const d = wrapD(i, S.wsi, n), u = d * SP, isSel = d === 0, y = pathPoint(u).y;
+    // islands near the top edge peek out half hidden and blurred; further ones are behind the bezel
+    const hidden = y <= -26, peek = !isSel && !hidden && y < 26;
+    out.push({ key: 'i:' + ws.id, kind: 'island', d, peek, html: glyph(ws), num: ws.loose ? '·' : String(i + 1), track: true,
+      t: { u, e: 1, w: ISL, h: ISL, s: isSel ? 1.18 : peek ? 0.82 : 1, rot: 0, o: hidden ? 0 : peek ? 0.7 : 1 },
+      from: { u: 0, e: 0, s: 0.35, o: 0 }, blob: { pad: 0, radius: ISL / 2 }, sel: isSel && S.level === 'ring', cur: isSel, act: ws.id === S.active,
+      pick: { wsi: i }, delay: Math.abs(d) * cfg.stagger, z: isSel ? 40 : 30 });
+  });
+  out.push(panelSpec('neck', { x: CX, y: (g.iy + g.top) / 2, w: 30, h: g.top - g.iy }, { x: CX, y: g.iy, w: 16, h: 8 }, 12));
+  if (searching) {
+    // the selected island stretches into the search bar; a second neck joins it to the notch, so notch, bar and results read as one shape
+    const count = results().length;
+    out.push(panelSpec('neck-top', { x: CX, y: (28 + g.iy) / 2, w: 44, h: g.iy - 28 }, { x: CX, y: 28, w: 30, h: 6 }, 12));
+    out.push({ key: 'search', kind: 'label', blob: { pad: 0, radius: 24 }, z: 70,
+      html: `<span class="sbar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg><span class="q">${esc(S.query)}</span><i class="caret"></i><em>${count ? count + ' result' + (count > 1 ? 's' : '') : 'no matches'}</em></span>`,
+      t: { x: CX, y: g.iy, w: 480, h: 48, s: 1, rot: 0, o: 1 }, from: { x: CX, y: g.iy, w: ISL * 1.18, h: 48, s: 1, o: 0 } });
+  }
+  const fr0 = frame(0, g), used = new Set();
+  for (const d of g.glance && !searching ? [0, -1, 1] : [0]) {
+    const i = (S.wsi + d + n) % n;
+    if (used.has(i)) continue;
+    used.add(i);
+    const ws = S.ws[i], fr = frame(d, g), peek = d !== 0;
+    out.push({ key: 'scr:' + ws.id, kind: 'screen', peek, t: { x: fr.x0 + fr.w / 2, y: fr.y0 + fr.h / 2, w: fr.w, h: fr.h, s: 1, rot: 0, o: peek ? 0.6 : 1 },
+      from: { x: CX, y: g.iy + 10, w: fr.w * 0.14, h: fr.h * 0.14, s: 1, o: 0 }, fromOpen: { x: fr.x0 + fr.w / 2 + S.dir * slide, o: 0 },
+      blob: { pad: 8, radius: 18 }, pick: peek ? { wsi: i, clickOnly: true } : null, z: peek ? 6 : 10, delay: peek ? 90 : 20 });
+    if (searching) continue;
+    const L = previewWins(ws);
+    L.forEach((w, k) => {
+      const r = ws.loose ? gridRect(k, L.length, fr) : miniRect(w.f, fr), sel = !peek && S.level === 'win' && S.wsel === w.uid;
+      out.push({ key: 'p:' + w.uid, kind: 'card', item: { type: 'win', w }, peek,
+        t: { x: r.x + r.w / 2, y: r.y + r.h / 2, w: r.w, h: r.h, s: sel ? 1.02 : 1, rot: 0, o: peek ? 0.55 : 1 },
+        from: { x: CX, y: g.iy, w: r.w * 0.15, h: r.h * 0.15, s: 1, o: 0 }, fromOpen: { x: r.x + r.w / 2 + S.dir * slide, o: 0 },
+        sel, cap: ws.loose && !peek ? `<span>${esc(w.t)}</span>` : '', pick: peek ? { wsi: i, clickOnly: true } : { wsi: S.wsi, uid: w.uid },
+        delay: 60 + k * cfg.stagger + (peek ? 60 : 0), z: peek ? 8 : sel ? 35 : 25 - Math.min(10, rank(w.uid)), radius: 6 });
+    });
+  }
+  const lblY = fr0.y0 + fr0.h - 56;
+  let main, hint;
+  if (searching) {
+    const R = results();
+    S.ri = clamp(S.ri, 0, Math.max(0, R.length - 1));
+    R.forEach((it, k) => {
+      const r = gridRect(k, R.length, fr0), sel = k === S.ri;
+      const enter = { x: r.x + r.w / 2, y: r.y + r.h / 2 + 16, w: r.w * 0.92, h: r.h * 0.92, o: 0 };
+      out.push({ key: it.type === 'ws' ? 's:ws-' + it.ws.id : 's:' + it.w.uid, kind: 'card', item: it.type === 'ws' ? { type: 'ws', ws: it.ws } : { type: 'win', w: it.w },
+        t: { x: r.x + r.w / 2, y: r.y + r.h / 2, w: r.w, h: r.h, s: sel ? 1.04 : 1, rot: 0, o: 1 }, from: enter, fromOpen: enter, exitOpen: { o: 0, s: 0.95 },
+        sel, cap: it.type === 'ws' ? '<span>Workspace</span>' : `${iconHTML(it.w.app, 'xs')}<span>${esc(it.w.t)}</span><em>${esc(wsOfWin(it.w).name)}</em>`,
+        pick: { ri: k }, delay: 30 + k * cfg.stagger, z: sel ? 35 : 25, radius: 8 });
+    });
+    const r = R[S.ri];
+    main = !r ? '<b>No windows or workspaces match</b>'
+      : r.type === 'ws' ? `<b>${esc(r.ws.name)}</b><em>workspace</em>`
+      : `${iconHTML(r.w.app, 'xs')}<b>${esc(r.w.t)}</b><em>${esc(wsOfWin(r.w).name)}</em>`;
+    hint = '◀ ▶ choose · return goes there · esc clears';
+  } else {
+    const ws = S.ws[S.wsi], L = previewWins(ws);
+    if (S.level === 'ring') {
+      const closed = ws.wins.filter((w) => !w.open).length;
+      main = `<b>${ws.loose ? '' : S.wsi + 1 + ' · '}${esc(ws.name)}</b><em>${ws.wins.length} window${ws.wins.length === 1 ? '' : 's'}${closed ? ` · ${closed} not open` : ''}</em>`;
+      hint = ws.loose ? '▼ pick a window · return brings them all forward · type to search' : `▼ pick a window · return ${closed ? 'opens and arranges' : 'arranges'} them · type to search`;
+    } else {
+      const w = winById(S.wsel) || L[0];
+      main = w ? `${iconHTML(w.app, 'xs')}<b>${esc(w.t)}</b><em>${esc(ws.name)}</em>` : `<b>${esc(ws.name)}</b>`;
+      hint = S.mode === 'hold' ? 'tab next · let go of ⌥ to switch' : ws.loose ? '⇧1–6 send to a workspace · ⇧delete close · ▲ back' : '⇧◀ ⇧▶ halves · ⇧▲ full · ⇧▼ centered · ⇧1–6 send · ⇧delete close';
+    }
+  }
+  out.push({ key: 'lbl', kind: 'label', html: `<span class="pill">${main}</span>`, t: { x: CX, y: lblY, w: 760, h: 26, s: 1, rot: 0, o: 1 }, from: { x: CX, y: lblY + 12, w: 760, h: 26, s: 1, o: 0 }, z: 60, delay: 80 });
+  out.push({ key: 'hint', kind: 'label', html: `<span class="pill sub">${hint}</span>`, t: { x: CX, y: lblY + 29, w: 760, h: 22, s: 1, rot: 0, o: 1 }, from: { x: CX, y: lblY + 40, w: 760, h: 22, s: 1, o: 0 }, z: 60, delay: 110 });
+  return out;
+}
+
+function sync() {
+  const n = S.ws.length;
+  if (S.wsi !== S.prevWsi) {
+    S.dir = Math.sign(wrapD(S.wsi, S.prevWsi, n)) || 1;
+    // previews that drop out of view slide off in the direction the ring turned
+    const slide = geo().pvW * 0.7;
+    for (const nd of nodes.values()) if ((nd.key.startsWith('p:') || nd.key.startsWith('scr:')) && !nd.forceExit) nd.forceExit = { x: nd.cur.x - S.dir * slide, o: 0 };
+    S.prevWsi = S.wsi;
+  }
+  const specs = layout(), seen = new Set(), t = now();
+  for (const sp of specs) {
+    seen.add(sp.key);
+    let nd = nodes.get(sp.key);
+    if (nd && nd.kind !== sp.kind) { destroyNode(nd); nd = null; }
+    if (!nd) { nd = createNode(sp); nd.delayUntil = cfg.reduce ? 0 : t + (sp.delay || 0) * slowF(); }
+    else {
+      if (nd.leaving) { nd.leaving = false; if (nd.el) nd.el.classList.remove('leaving'); }
+      if (sp.track && nd.spec.d != null && Math.abs(sp.d - nd.spec.d) > n / 2 && !cfg.reduce) {
+        // wrapped to the other end of the track: slide back down from behind the bezel instead of sweeping under the notch
+        nd.cur.u = sp.t.u + (sp.d < 0 ? -2 : 2) * SP;
+        nd.cur.o = 0; nd.vel.u = 0;
+      }
+    }
+    nd.forceExit = null;
+    nd.spec = sp;
+    nd.target = { ...DEF, ...sp.t };
+    updateEl(nd, sp);
+  }
+  for (const nd of nodes.values()) {
+    if (seen.has(nd.key) || nd.leaving) continue;
+    nd.leaving = true;
+    if (nd.el) nd.el.classList.add('leaving');
+    const sp = nd.spec;
+    const exit = cfg.reduce ? { o: 0 } : nd.forceExit || (S.open ? (sp.exitOpen || sp.exit || defFrom(sp)) : (sp.exit || defFrom(sp)));
+    nd.target = { ...nd.target, ...exit };
+    nd.delayUntil = 0;
+  }
+  S.justOpened = false;
+  kick();
+  chrome();
+}
+
+/* ---------- desktop ---------- */
+const desk = new Map();
+function renderDesktop(fly) {
+  const front = S.recent[0];
+  const open = allWins().filter((w) => w.open);
+  const show = (w) => cfg.mode === 'front' || (wsOfWin(w).id === S.active && !wsOfWin(w).loose) || S.looseFront.has(w.uid);
+  let flyIdx = 0, flyMax = 0;
+  for (const w of open) {
+    let el = desk.get(w.uid);
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'dwin';
+      el.innerHTML = `<div class="thumb">${winHTML(w)}</div><div class="splash">${iconHTML(w.app, 'xl')}</div>`;
+      deskL.appendChild(el);
+      desk.set(w.uid, el);
+    }
+    const r = deskRect(w.f), from = fly && fly[w.uid];
+    if (from) el.style.transition = 'none';
+    el.style.left = r.x + 'px'; el.style.top = r.y + 'px'; el.style.width = r.w + 'px'; el.style.height = r.h + 'px';
+    el.style.setProperty('--k', (r.w / TBW).toFixed(4));
+    el.querySelector('.thumb').style.height = ((TBW * r.h) / r.w).toFixed(1) + 'px';
+    el.style.zIndex = 100 - rank(w.uid);
+    el.classList.toggle('inactive', w.uid !== front);
+    el.classList.toggle('gone', !show(w));
+    if (w.launching) {
+      el.classList.add('launching');
+      w.launching = false;
+      setTimeout(() => el.classList.remove('launching'), 560 * slowF());
+    }
+    if (from) {
+      void el.offsetWidth;
+      const delay = flyIdx++ * 28 * slowF();
+      flyMax = Math.max(flyMax, delay);
+      el.animate([{ transform: `translate(${(from.x - r.x).toFixed(1)}px,${(from.y - r.y).toFixed(1)}px) scale(${(from.w / r.w).toFixed(4)},${(from.h / r.h).toFixed(4)})` }, { transform: 'none' }],
+        { duration: 360 * slowF(), delay, easing: 'cubic-bezier(.25,.85,.25,1)', fill: 'backwards' });
+      requestAnimationFrame(() => { el.style.transition = ''; });
+    }
+  }
+  for (const [uid, el] of desk) if (!open.some((w) => w.uid === uid)) { el.remove(); desk.delete(uid); }
+  if (fly && Object.keys(fly).length) {
+    screenEl.classList.add('flying');
+    clearTimeout(renderDesktop.t);
+    renderDesktop.t = setTimeout(() => screenEl.classList.remove('flying'), 360 * slowF() + flyMax + 40);
+  }
+  const fw = winById(front);
+  $('#mb-app').textContent = fw ? APPS[fw.app].name : 'Finder';
+}
+
+/* ---------- chrome ---------- */
+function chrome() {
+  const vis = S.open && S.shown;
+  scrim.classList.toggle('on', vis);
+  let st;
+  if (document.activeElement !== vp) st = 'Click the screen to use your keyboard';
+  else if (!S.open) st = 'Press ⌥ space for the ring · hold ⌥ and tap tab for recent windows';
+  else if (S.mode === 'hold') st = S.latch ? '⌥ held · tap tab for the next window · tap ⌥ to switch' : 'Holding ⌥ · tab for the next window · let go to switch';
+  else if (S.query) st = 'Searching windows and workspaces · return goes there · esc clears';
+  else if (S.level === 'ring') st = '◀ ▶ turn the ring · 1–6 jump · ▼ pick a window · return switches · type to search';
+  else st = '◀ ▶ windows · ⇧ + arrows snap · ⇧ + number sends · ▲ back to the ring · return focuses';
+  statusEl.textContent = st;
+  statusEl.classList.toggle('on', document.activeElement === vp);
+  let say = '';
+  if (vis) {
+    if (S.query) { const r = results()[S.ri]; say = r ? (r.type === 'ws' ? 'Workspace ' + r.ws.name : r.w.t) : ''; }
+    else if (S.level === 'ring') say = 'Workspace ' + S.ws[S.wsi].name;
+    else { const w = winById(S.wsel); say = w ? `${APPS[w.app].name}, ${w.t}` : ''; }
+  }
+  if (say && say !== S.lastLive) live.textContent = say;
+  S.lastLive = say;
+}
+const fmtMs = (ms) => (ms < 1000 ? Math.round(ms) + ' ms' : (ms / 1000).toFixed(2) + ' s');
+function renderLog() {
+  const el = $('#log');
+  if (!S.log.length) { el.innerHTML = '<li class="empty">Each switch lands here with how many keys it took and the time from hotkey to switch.</li>'; return; }
+  el.innerHTML = S.log.map((r) => `<li><span class="lv">${r.via}</span><span class="lt">${esc(r.what)} <em>· ${esc(r.where)}</em></span><span class="lm">${r.keys} key${r.keys === 1 ? '' : 's'} · ${fmtMs(r.ms)}</span></li>`).join('');
+}
+
+/* ---------- actions ---------- */
+function activate(ws, focusW, fly) {
+  if (ws.loose) {
+    const ids = (focusW ? [focusW] : previewWins(ws)).map((w) => w.uid);
+    ids.forEach((u) => S.looseFront.add(u));
+    S.recent = [...ids, ...S.recent.filter((u) => !ids.includes(u))];
+  } else {
+    S.active = ws.id;
+    S.looseFront = new Set();
+    ws.wins.forEach((w) => { if (!w.open) { w.open = true; w.launching = true; } });
+    const order = ws.wins.slice().sort((a, b) => rank(a.uid) - rank(b.uid)).map((w) => w.uid);
+    const first = focusW ? [focusW.uid, ...order.filter((u) => u !== focusW.uid)] : order;
+    S.recent = [...first, ...S.recent.filter((u) => !first.includes(u))];
+  }
+  renderDesktop(fly);
+}
+function commit(via) {
+  if (!S.open) return;
+  let target = null;
+  if (S.query.trim()) target = results()[S.ri] || null;
+  else if (S.level === 'ring') target = { type: 'ws', ws: S.ws[S.wsi] };
+  else { const w = winById(S.wsel); if (w) target = { type: 'win', w }; }
+  if (!target) { closePanel(); return; }
+  const ws = target.type === 'ws' ? target.ws : wsOfWin(target.w);
+  const focusW = target.type === 'win' ? target.w : null;
+  const flying = ws.loose ? (focusW ? [focusW] : ws.wins) : ws.wins;
+  const fly = {};
+  if (S.shown && cfg.fly === 'on' && !cfg.reduce) {
+    for (const nd of [...nodes.values()]) {
+      if (nd.kind !== 'card' || nd.leaving || nd.spec.item.type !== 'win' || !flying.includes(nd.spec.item.w)) continue;
+      const p = place(nd), c = nd.cur, ww = c.w * c.s, hh = c.h * c.s;
+      fly[nd.spec.item.w.uid] = { x: p.x - ww / 2, y: p.y - hh / 2, w: ww, h: hh };
+      destroyNode(nd);
+    }
+  }
+  const viaName = via === 'click' ? 'click' : S.mode === 'hold' ? '⌥ tab' : '⌥ space';
+  S.log.unshift({ via: viaName, what: focusW ? focusW.t : ws.name, where: focusW ? ws.name : 'workspace', keys: S.keys, ms: now() - S.openedAt });
+  S.log = S.log.slice(0, 6);
+  activate(ws, focusW, fly);
+  renderLog();
+  closePanel();
+}
+const SNAP = { left: [0, 0, 0.5, 1], right: [0.5, 0, 0.5, 1], full: [0, 0, 1, 1], center: [0.15, 0.06, 0.7, 0.88] };
+function snap(kind) {
+  const w = winById(S.wsel);
+  if (!w || wsOfWin(w).loose) return;
+  w.f = SNAP[kind].slice();
+  sync();
+  renderDesktop();
+}
+function sendTo(num) {
+  const target = S.ws[num - 1], w = winById(S.wsel);
+  if (!target || target.loose || !w) return;
+  const from = wsOfWin(w);
+  if (from === target) return;
+  from.wins.splice(from.wins.indexOf(w), 1);
+  target.wins.push(w);
+  S.looseFront.delete(w.uid);
+  const card = nodes.get('p:' + w.uid), isl = nodes.get('i:' + target.id);
+  if (card && isl) {
+    const p = place(isl);
+    card.forceExit = { x: p.x, y: p.y, w: 28, h: 18, s: 1, o: 0 };
+    isl.vel.s = (isl.vel.s || 0) + 7;
+  }
+  const L = previewWins(from);
+  if (L.length) S.wsel = L[0].uid; else S.level = 'ring';
+  sync();
+  renderDesktop();
+}
+function closeWin() {
+  const w = winById(S.wsel);
+  if (!w) return;
+  const from = wsOfWin(w);
+  from.wins.splice(from.wins.indexOf(w), 1);
+  S.recent = S.recent.filter((u) => u !== w.uid);
+  const card = nodes.get('p:' + w.uid);
+  if (card) card.forceExit = { s: 0.6, o: 0 };
+  const L = previewWins(from);
+  if (L.length) S.wsel = L[0].uid; else S.level = 'ring';
+  sync();
+  renderDesktop();
+}
+function selectHold() {
+  const w = S.holdList[S.hi];
+  if (!w) return;
+  S.level = 'win'; S.wsel = w.uid; S.wsi = S.ws.indexOf(wsOfWin(w));
+}
+function openPanel(mode, sub) {
+  if (S.open) return;
+  clearTimeout(S.timer);
+  Object.assign(S, { open: true, mode, query: '', ri: 0, openedAt: now(), keys: 1 });
+  if (mode === 'hold') {
+    const ro = recentOpen(), front = ro[0];
+    S.holdList = sub === 'app' && front ? ro.filter((w) => w.app === front.app) : ro;
+    S.hi = Math.min(1, S.holdList.length - 1);
+    selectHold();
+  } else {
+    S.level = 'ring';
+    S.wsi = Math.max(0, S.ws.findIndex((ws) => ws.id === S.active));
+  }
+  S.prevWsi = S.wsi;
+  const delay = mode === 'hold' ? cfg.delay * slowF() : 0;
+  const show = () => { if (!S.open) return; S.shown = true; S.justOpened = true; S.measure = now(); sync(); };
+  if (delay > 0) { S.shown = false; S.timer = setTimeout(show, delay); chrome(); }
+  else show();
+}
+function closePanel() {
+  clearTimeout(S.timer);
+  Object.assign(S, { open: false, shown: false, mode: null, query: '', measure: 0 });
+  sync();
+}
+function applyPick(p) {
+  if ('ri' in p) { if (S.ri === p.ri) return false; S.ri = p.ri; return true; }
+  if (S.mode === 'hold') return false;
+  if (p.uid) {
+    if (S.level === 'win' && S.wsel === p.uid) return false;
+    S.level = 'win'; S.wsel = p.uid; S.wsi = p.wsi;
+    return true;
+  }
+  if (S.level === 'ring' && S.wsi === p.wsi) return false;
+  S.level = 'ring'; S.wsi = p.wsi;
+  return true;
+}
+function nav(dir, axis) {
+  if (S.query.trim()) {
+    if (axis === 'h') S.ri = clamp(S.ri + dir, 0, Math.max(0, results().length - 1));
+  } else if (S.level === 'ring') {
+    if (axis === 'h') S.wsi = (S.wsi + dir + S.ws.length) % S.ws.length;
+    else if (dir > 0) {
+      const ws = S.ws[S.wsi], L = previewWins(ws);
+      if (L.length) { S.level = 'win'; S.wsel = L.slice().sort((a, b) => rank(a.uid) - rank(b.uid))[0].uid; }
+    }
+  } else if (axis === 'h') {
+    const L = previewWins(S.ws[S.wsi]);
+    const i = clamp(L.findIndex((w) => w.uid === S.wsel) + dir, 0, L.length - 1);
+    if (L[i]) S.wsel = L[i].uid;
+  } else if (dir < 0 && S.mode !== 'hold') S.level = 'ring';
+  sync();
+}
+function escape() {
+  if (S.query) { S.query = ''; S.ri = 0; sync(); }
+  else if (S.level === 'win' && S.mode !== 'hold') { S.level = 'ring'; sync(); }
+  else closePanel();
+}
+
+/* ---------- keyboard ---------- */
+function onDown(e) {
+  const k = e.key, c = e.code || '', shift = e.shiftKey || S.shift;
+  if (k === 'Alt' || k === 'Shift') return;
+  if (e.altKey && (k === 'Tab' || c === 'Backquote')) {
+    e.preventDefault();
+    if (!S.open) { openPanel('hold', c === 'Backquote' ? 'app' : 'all'); return; }
+    S.keys++;
+    if (S.mode === 'hold' && S.holdList.length) { S.hi = (S.hi + (e.shiftKey ? -1 : 1) + S.holdList.length) % S.holdList.length; selectHold(); sync(); }
+    else nav(e.shiftKey ? -1 : 1, 'h');
+    return;
+  }
+  if (c === 'Space' && (e.altKey || !S.open)) { e.preventDefault(); if (!S.open) openPanel('tap'); else closePanel(); return; }
+  if (!S.open) return;
+  const editing = S.level === 'win' && S.mode !== 'hold' && !S.query;
+  let handled = true;
+  if (shift && editing && /^Arrow/.test(k)) { S.keys++; snap({ ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'full', ArrowDown: 'center' }[k]); }
+  else if (shift && editing && /^Digit[1-9]$/.test(c)) { S.keys++; sendTo(+c.slice(5)); }
+  else if (shift && editing && k === 'Backspace') { S.keys++; closeWin(); }
+  else {
+    switch (k) {
+      case 'ArrowLeft': case 'ArrowRight': S.keys++; nav(k === 'ArrowLeft' ? -1 : 1, 'h'); break;
+      case 'ArrowUp': case 'ArrowDown': S.keys++; nav(k === 'ArrowUp' ? -1 : 1, 'v'); break;
+      case 'Enter': S.keys++; commit(); break;
+      case 'Escape': S.keys++; escape(); break;
+      case 'Backspace': if (S.query) { S.keys++; S.query = e.altKey || e.metaKey ? '' : S.query.slice(0, -1); S.ri = 0; sync(); } break;
+      default: handled = false;
+    }
+  }
+  if (!handled && S.mode === 'tap' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+    if (/^Digit[1-9]$/.test(c) && !S.query && !shift) {
+      const i = +c.slice(5) - 1;
+      if (S.ws[i] && !S.ws[i].loose) { S.keys++; S.level = 'ring'; S.wsi = i; sync(); }
+      handled = true;
+    } else {
+      let ch = null;
+      if (/^Key[A-Z]$/.test(c)) ch = c.slice(3).toLowerCase();
+      else if (/^Digit[0-9]$/.test(c)) ch = c.slice(5);
+      else if (c === 'Space' && S.query) ch = ' ';
+      else if (c === 'Period') ch = '.';
+      else if (c === 'Minus') ch = '-';
+      if (ch) { S.keys++; S.query += ch; S.ri = 0; sync(); handled = true; }
+    }
+  }
+  if (handled) e.preventDefault();
+}
+function onUp(e) {
+  if (e.key !== 'Alt') return;
+  if (S.latch && !e.synthetic) return;
+  if (S.open && S.mode === 'hold') commit();
+}
+vp.addEventListener('keydown', onDown);
+vp.addEventListener('keyup', onUp);
+vp.addEventListener('focus', chrome);
+vp.addEventListener('blur', () => {
+  if (S.open && S.mode === 'hold') closePanel();
+  if (S.latch) { S.latch = false; syncLatch(); }
+  chrome();
+});
+let wasFocused = false;
+vp.addEventListener('mousedown', () => { wasFocused = document.activeElement === vp; });
+vp.addEventListener('click', (e) => {
+  if (e.target.closest('.nd')) return;
+  if (wasFocused && S.open) closePanel();
+  vp.focus({ preventScroll: true });
+});
+
+/* ---------- on-screen keys ---------- */
+const pad = $('#pad'), altCap = pad.querySelector('[data-k="Alt"]'), shiftCap = pad.querySelector('[data-k="Shift"]');
+function syncLatch() { altCap.setAttribute('aria-pressed', S.latch ? 'true' : 'false'); shiftCap.setAttribute('aria-pressed', S.shift ? 'true' : 'false'); }
+const fake = (key, code) => ({ key, code, altKey: S.latch, shiftKey: false, metaKey: false, ctrlKey: false, preventDefault() {} });
+const PADMAP = { Tab: ['Tab', 'Tab'], Space: [' ', 'Space'], ArrowLeft: ['ArrowLeft', 'ArrowLeft'], ArrowRight: ['ArrowRight', 'ArrowRight'],
+  ArrowUp: ['ArrowUp', 'ArrowUp'], ArrowDown: ['ArrowDown', 'ArrowDown'], Enter: ['Enter', 'Enter'], Escape: ['Escape', 'Escape'], Backspace: ['Backspace', 'Backspace'] };
+pad.addEventListener('mousedown', (e) => { if (e.target.closest('button')) e.preventDefault(); });
+pad.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-k]');
+  if (!b) return;
+  if (document.activeElement !== vp) vp.focus({ preventScroll: true });
+  const k = b.dataset.k;
+  if (k === 'Alt') { S.latch = !S.latch; syncLatch(); if (!S.latch) onUp({ key: 'Alt', synthetic: true }); chrome(); return; }
+  if (k === 'Shift') { S.shift = !S.shift; syncLatch(); return; }
+  const [key, code] = PADMAP[k];
+  onDown(fake(key, code));
+});
+
+/* ---------- knobs ---------- */
+const FMT = { gap: (v) => v + ' px', speed: (v) => v, bounce: (v) => v + '%', delay: (v) => v + ' ms' };
+function applyCfg() {
+  buildPath();
+  gooL.classList.toggle('goo', !cfg.reduce);
+  screenEl.classList.toggle('day', cfg.wall === 'day');
+  screenEl.classList.toggle('dusk', cfg.wall !== 'day');
+  screenEl.style.setProperty('--slow', slowF());
+  renderDesktop();
+  if (S.open && S.shown) sync();
+}
+Object.keys(FMT).forEach((id) => {
+  const el = $('#' + id), out = $('#o-' + id);
+  el.value = cfg[id];
+  out.textContent = FMT[id](cfg[id]);
+  el.addEventListener('input', () => { cfg[id] = +el.value; out.textContent = FMT[id](cfg[id]); save(); applyCfg(); });
+});
+['slow', 'reduce'].forEach((id) => {
+  const el = $('#' + id);
+  el.checked = !!cfg[id];
+  el.addEventListener('change', () => { cfg[id] = el.checked; save(); applyCfg(); });
+});
+['shape', 'layout', 'mode', 'fly', 'wall'].forEach((name) => {
+  document.querySelectorAll(`input[name="${name}"]`).forEach((el) => {
+    el.checked = el.value === cfg[name];
+    el.addEventListener('change', () => { if (el.checked) { cfg[name] = el.value; save(); applyCfg(); } });
+  });
+});
+$('#replay').addEventListener('click', () => {
+  vp.focus({ preventScroll: true });
+  if (S.open) { closePanel(); setTimeout(() => openPanel('tap'), 420 * slowF()); }
+  else openPanel('tap');
+});
+$('#reset').addEventListener('click', () => {
+  clearTimeout(S.timer);
+  Object.assign(S, { open: false, shown: false, mode: null, query: '' });
+  destroyAll();
+  for (const el of desk.values()) el.remove();
+  desk.clear();
+  seed();
+  renderDesktop();
+  chrome();
+  vp.focus({ preventScroll: true });
+  setTimeout(() => openPanel('tap'), 60);
+});
+
+const fit = () => { screenEl.style.transform = `scale(${vp.clientWidth / W})`; };
+new ResizeObserver(fit).observe(vp);
+fit();
+seed();
+applyCfg();
+renderLog();
+chrome();
+setTimeout(() => { if (!S.open) openPanel('tap'); }, 450);
+})();
+</script>

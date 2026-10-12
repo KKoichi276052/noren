@@ -1,0 +1,1081 @@
+<meta charset="utf-8">
+<title>Notch Concept Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Schibsted+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: concept picker over the simulated MacBook display (the hero); keycap pad under it; knobs beside keys + switch log; then review questions. */
+:root{
+  --ground:#e7e8eb; --surface:#f6f6f8; --raise:#ffffff; --ink:#16171a; --muted:#5b5f69; --line:#d1d3d9;
+  --accent:#2f5bd3; --key:#fdfdfe; --key-down:#eceef2; --key-edge:#c3c6cd; --key-ink:#26282d;
+  --bezel:#0b0b0c; --bezel-edge:#c4c6cc; --shadow:rgba(20,24,40,.14); --shadow-deep:rgba(20,24,40,.45);
+  --f-display:"Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --f-body:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --f-mac:-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#101114; --surface:#17181c; --raise:#202227; --ink:#ebecef; --muted:#9a9ea8; --line:#2a2c32;
+    --accent:#88a3ff; --key:#25272d; --key-down:#1c1d22; --key-edge:#3b3e46; --key-ink:#e3e4e8;
+    --bezel-edge:#2c2e34; --shadow:rgba(0,0,0,.4); --shadow-deep:rgba(0,0,0,.7); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#101114; --surface:#17181c; --raise:#202227; --ink:#ebecef; --muted:#9a9ea8; --line:#2a2c32;
+  --accent:#88a3ff; --key:#25272d; --key-down:#1c1d22; --key-edge:#3b3e46; --key-ink:#e3e4e8;
+  --bezel-edge:#2c2e34; --shadow:rgba(0,0,0,.4); --shadow-deep:rgba(0,0,0,.7); color-scheme:dark;
+}
+*{ box-sizing:border-box }
+body{ background:var(--ground); color:var(--ink); font:15px/1.55 var(--f-body) }
+.wrap{ max-width:1180px; margin:0 auto; padding-inline:20px; padding-block:32px 64px; display:grid; gap:20px }
+@media (max-width:520px){ .wrap{ padding-inline:16px; padding-block:22px 48px } }
+.head{ display:grid; gap:6px; max-width:70ch }
+.eyebrow{ margin:0; font:500 11.5px/1.4 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted) }
+h1{ margin:0; font:700 clamp(30px,4.4vw,44px)/1.05 var(--f-display); letter-spacing:-.02em; text-wrap:balance }
+.lede{ margin:4px 0 0; color:var(--muted) }
+h2{ margin:0; font:600 16px/1.3 var(--f-display) }
+kbd{ font:500 12px/1 var(--f-mac); display:inline-block; min-width:1.8em; padding:3px 6px 4px; border:1px solid var(--key-edge); border-bottom-width:2px; border-radius:5px; background:var(--key); color:var(--key-ink); text-align:center; white-space:nowrap; vertical-align:1px }
+
+/* concept picker */
+.concepts{ border:0; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; min-width:0 }
+.concepts legend{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0) }
+.concepts input{ position:absolute; opacity:0; width:1px; height:1px; pointer-events:none }
+.concepts label{ display:grid; gap:2px; padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:var(--surface); cursor:pointer }
+.concepts label b{ font:600 17px/1.2 var(--f-display); display:flex; gap:8px; align-items:baseline }
+.concepts label b kbd{ font-size:10.5px; padding:2px 5px 3px }
+.concepts label span{ font-size:13px; color:var(--muted) }
+.concepts input:checked + label{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); background:var(--raise) }
+.concepts input:focus-visible + label{ outline:2px solid var(--accent); outline-offset:2px }
+
+/* ---------- stage ---------- */
+.stage{ position:relative; padding:9px; background:var(--bezel); border-radius:20px; box-shadow:0 0 0 1px var(--bezel-edge), 0 26px 50px -30px var(--shadow-deep) }
+.viewport{ position:relative; width:100%; aspect-ratio:1280/800; overflow:hidden; border-radius:10px; outline:none; background:#0d1020 }
+.viewport:focus-visible{ box-shadow:0 0 0 3px var(--accent) }
+.screen{ position:absolute; left:0; top:0; width:1280px; height:800px; transform-origin:0 0; overflow:hidden; font-family:var(--f-mac); user-select:none; -webkit-user-select:none }
+.wall{ position:absolute; inset:0 }
+.dusk .wall{ background:radial-gradient(110% 90% at 18% 8%, #2c3d72 0%, transparent 58%), radial-gradient(90% 80% at 88% 18%, #5b2c62 0%, transparent 55%), linear-gradient(160deg,#151b35,#0c0f1d 60%,#1d1430) }
+.day .wall{ background:radial-gradient(110% 80% at 14% 0%, #ffe0c2 0%, transparent 55%), radial-gradient(90% 80% at 90% 12%, #c6d9ff 0%, transparent 60%), linear-gradient(170deg,#f3eee8,#dde6f3) }
+.menubar{ position:absolute; left:0; top:0; width:1280px; height:34px; display:flex; justify-content:space-between; align-items:center; padding:0 16px; font-size:13px; backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px) }
+.dusk .menubar{ background:rgba(8,10,22,.38); color:#f1f2f6 }
+.day .menubar{ background:rgba(255,255,255,.5); color:#1b1c20 }
+.mb-l, .mb-r{ display:flex; align-items:center; gap:18px; white-space:nowrap }
+.mb-l{ max-width:520px; overflow:hidden }
+.mb-l b{ font-weight:700 }
+.mb-logo{ width:13px; height:13px; border-radius:4px; border:1.8px solid currentColor; flex:none }
+.mb-r{ gap:14px }
+.mb-r svg{ width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round }
+.dwin{ position:absolute; width:780px; height:488px; border-radius:12px; overflow:hidden; --k:1.95; box-shadow:0 34px 70px -26px rgba(0,0,0,.65), 0 0 0 1px rgba(0,0,0,.25) }
+.dwin.front{ left:250px; top:176px }
+.dwin.back{ left:186px; top:128px; filter:brightness(.72) saturate(.7) }
+.dwin.back .wt-bar i{ background:rgba(140,140,150,.5) !important }
+.dwin.front.swap{ animation:swap 180ms cubic-bezier(.2,.8,.2,1) }
+@keyframes swap{ from{ opacity:.5; transform:translateY(7px) scale(.99) } to{ opacity:1; transform:none } }
+.flyer{ position:absolute; left:250px; top:176px; width:780px; height:488px; border-radius:12px; overflow:hidden; --k:1.95; transform-origin:0 0; pointer-events:none; box-shadow:0 30px 60px -20px rgba(0,0,0,.7) }
+.thumb{ width:400px; height:250px; transform:scale(var(--k,1)); transform-origin:0 0 }
+.scrim{ position:absolute; inset:0; background:radial-gradient(70% 420px at 50% 0, rgba(0,0,0,.42), transparent 100%); opacity:0; transition:opacity 200ms; pointer-events:none }
+.scrim.on{ opacity:1 }
+
+/* ---------- overlay layers ---------- */
+.layer{ position:absolute; left:0; top:-40px; width:1280px; pointer-events:none }
+#goo-layer{ height:680px }
+#goo-layer.goo{ filter:url(#goo) }
+#face-layer{ height:840px }
+.notch{ position:absolute; left:545px; top:0; width:190px; height:74px; background:#000; border-radius:0 0 14px 14px }
+.notch.virtual{ height:40px; transition:height 110ms cubic-bezier(.2,.9,.3,1) 160ms }
+.notch.virtual.on{ height:74px; transition-delay:0s }
+.bl{ position:absolute; left:0; top:0; background:#000; transform-origin:50% 50%; will-change:transform }
+.nd{ position:absolute; left:0; top:0; transform-origin:50% 50%; will-change:transform,opacity; pointer-events:auto; cursor:pointer }
+.nd.leaving{ pointer-events:none }
+.nd-label, .nd-more{ pointer-events:none }
+.nd-card .frame{ position:absolute; inset:0; border-radius:var(--r,10px); overflow:hidden; background:#000; box-shadow:0 0 0 1.5px #000, 0 12px 26px -12px rgba(0,0,0,.7); transition:box-shadow 120ms }
+.nd-card.sel .frame{ box-shadow:0 0 0 2px #fff, 0 0 24px 4px rgba(140,170,255,.42), 0 14px 30px -10px rgba(0,0,0,.75) }
+.nd-card .frame.launch{ display:grid; place-items:center; background:#0c0c0e; box-shadow:inset 0 0 0 1px rgba(255,255,255,.12) }
+.nd-card .cap{ position:absolute; left:50%; top:calc(100% + 8px); transform:translateX(-50%); max-width:calc(100% + 40px); display:flex; gap:6px; align-items:center; padding:3px 9px; border-radius:9px; background:rgba(0,0,0,.78); font-size:11.5px; line-height:1.3; color:rgba(255,255,255,.66); white-space:nowrap }
+.nd-card.sel .cap{ color:#fff }
+.nd-card .cap span{ overflow:hidden; text-overflow:ellipsis; min-width:0 }
+.nd-card .cap b{ font-weight:600; color:#fff }
+.nd-card .cap em{ font-style:normal; color:rgba(255,255,255,.5); margin-left:4px }
+.nd-island .isl-in{ position:absolute; inset:0; border-radius:50%; display:grid; place-items:center; box-shadow:inset 0 0 0 1px rgba(255,255,255,.15) }
+.nd-island .ring{ position:absolute; inset:-3px; border-radius:50%; box-shadow:0 0 0 2px rgba(255,255,255,.94), 0 0 20px 3px rgba(140,170,255,.5); opacity:0; transition:opacity 100ms }
+.nd-island.sel .ring{ opacity:1 }
+.nd-header{ display:flex; align-items:center; justify-content:center; gap:8px; color:#fff; font-size:13px; font-weight:600; white-space:nowrap }
+.nd-label{ display:flex; align-items:center; justify-content:center }
+.pill{ display:inline-flex; gap:8px; align-items:center; padding:4px 12px; border-radius:12px; background:rgba(0,0,0,.86); color:#fff; font-size:12.5px; white-space:nowrap; box-shadow:0 0 0 1px rgba(255,255,255,.08) }
+.pill em{ font-style:normal; color:rgba(255,255,255,.55) }
+.pill svg{ width:13px; height:13px; fill:none; stroke:rgba(255,255,255,.6); stroke-width:2.2; stroke-linecap:round }
+.caret{ width:1.5px; height:14px; background:#9db6ff; animation:blink 1s steps(1) infinite }
+@keyframes blink{ 50%{ opacity:0 } }
+.nd-more{ display:grid; place-items:center; font-size:11px; font-weight:600; color:rgba(255,255,255,.55) }
+.ico{ display:grid; place-items:center; flex:none; border-radius:22.5%; box-shadow:inset 0 0 0 .5px rgba(255,255,255,.28), 0 1px 2px rgba(0,0,0,.35) }
+.ico svg{ fill:none; stroke:#fff; stroke-linecap:round; stroke-linejoin:round }
+.ico.xs{ width:15px; height:15px; border-radius:4px } .ico.xs svg{ width:10px; height:10px; stroke-width:2.6 }
+.ico.sm{ width:20px; height:20px; border-radius:5px } .ico.sm svg{ width:13px; height:13px; stroke-width:2.4 }
+.ico.md{ width:40px; height:40px } .ico.md svg{ width:24px; height:24px; stroke-width:2 }
+.ico.xl{ width:72px; height:72px } .ico.xl svg{ width:42px; height:42px; stroke-width:1.8 }
+.status{ position:absolute; left:50%; bottom:10px; transform:translateX(-50%); margin:0; max-width:calc(100% - 20px); padding:5px 12px; border-radius:999px; background:rgba(0,0,0,.68); color:#f2f3f6; font:12px/1.3 var(--f-mac); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; pointer-events:none }
+.defs{ position:absolute; width:0; height:0; overflow:hidden }
+.sr{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap }
+
+/* ---------- mock window contents (400 x 250 base) ---------- */
+.wt{ position:relative; width:400px; height:250px; overflow:hidden; background:#f6f6f8; color:#222; font-family:var(--f-mac) }
+.wt.dk{ background:#1b1d23; color:#ddd }
+.wt.k-term-w{ background:#0c0e11 }
+.wt.k-notes-w{ background:#fbf3cf }
+.wt-bar{ height:22px; display:flex; align-items:center; gap:5px; padding:0 9px; background:rgba(0,0,0,.045); border-bottom:1px solid rgba(0,0,0,.07) }
+.wt.dk .wt-bar{ background:rgba(255,255,255,.04); border-color:rgba(255,255,255,.06) }
+.wt-bar i{ width:8px; height:8px; border-radius:50%; background:#ff5f57; flex:none }
+.wt-bar i:nth-child(2){ background:#febc2e } .wt-bar i:nth-child(3){ background:#28c840 }
+.wt-bar span{ flex:1; text-align:center; font-size:8.5px; font-weight:600; opacity:.6; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-right:30px }
+.wb{ position:absolute; left:0; right:0; top:22px; bottom:0; display:flex }
+.wb i{ display:block; height:5px; border-radius:3px }
+.cd-side{ width:78px; padding:9px 8px; display:grid; gap:7px; align-content:start; background:rgba(255,255,255,.03); border-right:1px solid rgba(255,255,255,.05) }
+.cd-side i{ background:rgba(255,255,255,.13) }
+.cd-main{ flex:1; padding:9px 10px; display:grid; gap:6.5px; align-content:start }
+.cd-ln{ display:flex; align-items:center }
+.cd-ln b{ width:9px; height:4px; border-radius:2px; background:rgba(255,255,255,.12); flex:none; margin-right:9px }
+.cd-ln span{ display:flex; gap:4px }
+.c0{ background:#c792ea } .c1{ background:#82aaff } .c2{ background:#c3e88d } .c3{ background:rgba(255,255,255,.34) }
+.k-web{ flex-direction:column; padding:8px 12px; gap:8px }
+.wb-url{ height:10px; width:55%; margin:0 auto; border-radius:5px; background:rgba(0,0,0,.07) }
+.wb-hero{ height:72px; border-radius:6px }
+.wb-lines{ display:grid; gap:5px } .wb-lines i{ background:rgba(0,0,0,.13) }
+.wb-cards{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; flex:1 } .wb-cards i{ height:auto; border-radius:5px; background:rgba(0,0,0,.06) }
+.k-term{ flex-direction:column; padding:9px 11px; gap:6px }
+.tm-ln{ display:flex; gap:5px; align-items:center } .tm-ln b{ width:6px; height:5px; background:#5fd38d; border-radius:1px; flex:none }
+.tm-ln i{ background:rgba(230,230,230,.5) } .tm-ln i.g{ background:#5fd38d }
+.ch-side{ width:92px; background:#3a2a52; padding:10px 8px; display:grid; gap:7px; align-content:start } .ch-side i{ background:rgba(255,255,255,.26) }
+.ch-main{ flex:1; padding:11px; display:grid; gap:11px; align-content:start }
+.ch-msg{ display:flex; gap:7px } .ch-msg b{ width:16px; height:16px; border-radius:5px; flex:none } .ch-msg div{ flex:1; display:grid; gap:4px } .ch-msg i{ background:rgba(0,0,0,.14) }
+.ml-list{ width:150px; border-right:1px solid rgba(0,0,0,.07); display:grid; align-content:start }
+.ml-row{ padding:7px 9px; display:grid; gap:4px; border-bottom:1px solid rgba(0,0,0,.05) } .ml-row i{ background:rgba(0,0,0,.18) }
+.ml-row.on{ background:#2f7cf6 } .ml-row.on i{ background:rgba(255,255,255,.75) }
+.ml-read{ flex:1; padding:12px; display:grid; gap:6px; align-content:start } .ml-read i{ background:rgba(0,0,0,.12) }
+.nt{ flex:1; padding:12px 16px; display:grid; gap:7px; align-content:start } .nt i{ background:rgba(90,70,10,.22) } .nt i:first-child{ height:9px; background:rgba(90,70,10,.42) }
+.dz{ flex:1; background:#d9dbe0; display:grid; place-items:center }
+.dz-art{ position:relative; width:62%; height:80%; background:#fff; border-radius:3px; box-shadow:0 2px 6px rgba(0,0,0,.12) }
+.dz-art b{ position:absolute; left:12%; top:16%; width:30%; aspect-ratio:1; border-radius:50% }
+.dz-art s{ position:absolute; right:12%; top:30%; width:38%; height:42%; border-radius:8px }
+.dz-art i{ position:absolute; left:12%; bottom:12%; width:44%; background:rgba(0,0,0,.14) }
+.mu-side{ width:84px; padding:10px 8px; display:grid; gap:7px; align-content:start; background:rgba(255,255,255,.03) } .mu-side i{ background:rgba(255,255,255,.14) }
+.mu-main{ flex:1; padding:14px; display:flex; gap:14px }
+.mu-art{ width:120px; height:120px; border-radius:8px; flex:none; box-shadow:0 8px 18px rgba(0,0,0,.4) }
+.mu-rows{ flex:1; display:grid; gap:9px; align-content:start } .mu-rows i{ background:rgba(255,255,255,.2) }
+.cl{ flex:1; padding:10px; display:grid; grid-template-columns:repeat(7,1fr); grid-auto-rows:1fr; gap:3px }
+.cl > div{ border-radius:3px; background:rgba(0,0,0,.04); padding:3px; display:grid; align-content:start; gap:3px } .cl > div i{ height:7px }
+.fl{ flex:1; padding:14px; display:grid; grid-template-columns:repeat(6,1fr); gap:12px; align-content:start }
+.fl > div{ display:grid; justify-items:center; gap:4px } .fl b{ width:38px; height:28px; border-radius:4px; background:#6db6f2 } .fl i{ width:32px; background:rgba(0,0,0,.14) }
+.vd{ flex:1; padding:8px; display:grid; grid-template-columns:1fr 1fr; grid-auto-rows:1fr; gap:6px; background:#111317 }
+.vd > div{ border-radius:6px; background:#23262d; display:grid; place-items:center } .vd b{ width:48px; height:48px; border-radius:50% }
+.ph{ flex:1; padding:6px; display:grid; grid-template-columns:repeat(5,1fr); grid-auto-rows:1fr; gap:4px } .ph i{ height:auto; border-radius:2px }
+.dc{ flex:1; padding:16px 40px; display:grid; gap:7px; align-content:start; background:#fff } .dc i{ background:rgba(0,0,0,.13) } .dc i:first-child{ height:10px; background:rgba(0,0,0,.4) }
+
+/* ---------- keycap pad ---------- */
+.deck{ display:flex; flex-wrap:wrap; gap:12px 24px; align-items:center; justify-content:space-between }
+.pad{ display:flex; flex-wrap:wrap; gap:6px; align-items:flex-end }
+.cap{ font:500 12px/1 var(--f-mac); color:var(--key-ink); background:var(--key); border:1px solid var(--key-edge); border-bottom-width:3px; border-radius:7px; height:38px; min-width:44px; padding:0 11px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:5px }
+.cap small{ font-size:10px; color:var(--muted) }
+.cap.w{ min-width:78px } .cap.xw{ min-width:132px }
+.cap:active, .cap[aria-pressed="true"]{ transform:translateY(2px); border-bottom-width:1px; background:var(--key-down) }
+.cap[aria-pressed="true"]{ border-color:var(--accent); color:var(--accent) }
+.cap:focus-visible{ outline:2px solid var(--accent); outline-offset:2px }
+.arrows{ display:grid; grid-template-columns:repeat(3,40px); grid-template-rows:18px 18px; gap:2px }
+.arrows .cap{ height:18px; min-width:0; padding:0; font-size:10px; border-bottom-width:2px; border-radius:4px }
+.arrows .up{ grid-column:2; grid-row:1 } .arrows .lf{ grid-column:1; grid-row:2 } .arrows .dn{ grid-column:2; grid-row:2 } .arrows .rt{ grid-column:3; grid-row:2 }
+.pad-note{ margin:0; font-size:13px; color:var(--muted); max-width:44ch }
+
+/* ---------- knobs, keys, log ---------- */
+.cols{ display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:20px; align-items:start }
+@media (max-width:880px){ .cols{ grid-template-columns:1fr } }
+.card{ background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:18px 20px 20px; display:grid; gap:16px; min-width:0 }
+.card-head{ display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 14px }
+.readout{ margin:0; font:12.5px/1.4 var(--f-mono); color:var(--muted); font-variant-numeric:tabular-nums }
+.readout b{ color:var(--ink); font-weight:500 }
+.btn{ font:500 13px/1 var(--f-body); color:var(--ink); background:var(--raise); border:1px solid var(--line); border-radius:8px; padding:8px 12px; cursor:pointer; box-shadow:0 1px 2px var(--shadow) }
+.btn:hover{ border-color:var(--muted) }
+.btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px }
+.knob-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:16px 24px }
+.group-label{ margin:4px 0 -4px; font:500 11px/1.4 var(--f-mono); letter-spacing:.08em; text-transform:uppercase; color:var(--muted) }
+.rng{ display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 10px; align-items:baseline; min-width:0 }
+.rng label{ font-size:13px }
+.rng output{ font:12.5px var(--f-mono); color:var(--muted); font-variant-numeric:tabular-nums }
+.rng input{ grid-column:1/-1; width:100%; accent-color:var(--accent); margin:2px 0 0 }
+.seg{ border:0; padding:0; margin:0; min-width:0 }
+.seg legend{ font-size:13px; padding:0; margin-bottom:6px }
+.opts{ display:flex; flex-wrap:wrap; gap:3px; padding:3px; border-radius:9px; background:var(--ground); border:1px solid var(--line) }
+.opts input{ position:absolute; opacity:0; width:1px; height:1px; pointer-events:none }
+.opts label{ flex:1 1 auto; text-align:center; padding:6px 10px; border-radius:7px; font-size:12.5px; color:var(--muted); cursor:pointer; white-space:nowrap }
+.opts input:checked + label{ background:var(--raise); color:var(--ink); box-shadow:0 1px 2px var(--shadow), 0 0 0 1px var(--line) }
+.opts input:focus-visible + label{ outline:2px solid var(--accent); outline-offset:1px }
+.checks{ display:grid; gap:8px; align-content:start }
+.chk{ display:flex; gap:8px; align-items:flex-start; font-size:13px }
+.chk input{ accent-color:var(--accent); margin:3px 0 0 }
+.keys{ margin:0; display:grid }
+.keys > div{ display:grid; grid-template-columns:minmax(118px,auto) minmax(0,1fr); gap:12px; padding:7px 0; border-top:1px solid var(--line); align-items:baseline }
+.keys > div:first-child{ border-top:0 }
+.keys dt{ font-size:12.5px; color:var(--muted); white-space:nowrap }
+.keys dd{ margin:0; font-size:13.5px }
+.log{ list-style:none; margin:0; padding:0; display:grid }
+.log li{ display:grid; grid-template-columns:62px minmax(0,1fr) auto; gap:10px; align-items:baseline; padding:7px 0; border-top:1px solid var(--line); font-size:13.5px }
+.log li:first-child{ border-top:0 }
+.log .lv{ font:500 11.5px var(--f-mono); color:var(--muted) }
+.log .lt{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.log .lt em{ font-style:normal; color:var(--muted) }
+.log .lm{ font:12px var(--f-mono); color:var(--muted); font-variant-numeric:tabular-nums; white-space:nowrap }
+.log li.empty{ display:block; color:var(--muted) }
+.judge{ display:grid; gap:12px; padding-top:6px }
+.judge ul{ margin:0; padding-left:18px; columns:2 320px; column-gap:40px }
+.judge li{ break-inside:avoid; margin-bottom:10px; max-width:60ch }
+.judge li b{ font-weight:600 }
+.foot{ margin:0; font-size:12.5px; color:var(--muted); max-width:80ch }
+@media (prefers-reduced-motion: reduce){ .caret{ animation:none } }
+</style>
+
+<main class="wrap">
+  <header class="head">
+    <p class="eyebrow">Concept study · prototype 0.2 · three ways to anchor on the notch</p>
+    <h1>Notch Concept Lab</h1>
+    <p class="lede">Pick a concept, click the screen, then hold <kbd>⌥</kbd> and tap <kbd>tab</kbd>, or press <kbd>⌥</kbd>&#8202;<kbd>space</kbd> to browse. Every concept keeps the selection directly under the notch. With six or fewer windows open, they all show at once. Apps, windows and thumbnails are simulated.</p>
+  </header>
+
+  <fieldset class="concepts">
+    <legend>Concept</legend>
+    <input type="radio" name="concept" id="concept-columns" value="columns"><label for="concept-columns"><b>Columns <kbd>1</kbd></b><span>The notch widens into a shelf. Each app is a column of its windows, niri style.</span></label>
+    <input type="radio" name="concept" id="concept-axle" value="axle"><label for="concept-axle"><b>Axle <kbd>2</kbd></b><span>Apps ride a wheel turning around the notch. The selected app's windows fan out below.</span></label>
+    <input type="radio" name="concept" id="concept-loupe" value="loupe"><label for="concept-loupe"><b>Loupe <kbd>3</kbd></b><span>Windows slide along the menu bar. The notch magnifies one and drops it down.</span></label>
+  </fieldset>
+
+  <section class="stage" aria-label="Simulated MacBook display">
+    <div class="viewport" id="viewport" tabindex="0" role="application" aria-label="Simulated screen. Hold Option and press Tab to switch windows, or press Option Space to browse.">
+      <div class="screen dusk" id="screen">
+        <div class="wall"></div>
+        <div class="dwin back" id="win-back"></div>
+        <div class="dwin front" id="win-front"></div>
+        <div class="menubar">
+          <div class="mb-l"><span class="mb-logo"></span><b id="mb-app">Code Editor</b><span>File</span><span>Edit</span><span>View</span><span>Go</span><span>Window</span><span>Help</span></div>
+          <div class="mb-r">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 9a14 14 0 0 1 19 0M5.8 12.4a9 9 0 0 1 12.4 0M9.1 15.8a4.2 4.2 0 0 1 5.8 0"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7.5" width="18" height="9" rx="2.6"/><rect x="4" y="9.5" width="11" height="5" rx="1.2" fill="currentColor" stroke="none"/><path d="M22 10.8v2.4"/></svg>
+            <span>Mon 5 Oct</span><span>9:41</span>
+          </div>
+        </div>
+        <div class="scrim" id="scrim"></div>
+        <div class="layer" id="goo-layer"><div class="notch" id="notch"></div></div>
+        <div class="layer" id="face-layer"></div>
+      </div>
+      <p class="status" id="status">Click the screen to use your keyboard</p>
+    </div>
+    <svg class="defs" aria-hidden="true" focusable="false">
+      <filter id="goo" x="-5%" y="-10%" width="110%" height="120%" color-interpolation-filters="sRGB">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur"/>
+        <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 24 -12" result="goo"/>
+        <feBlend in="SourceGraphic" in2="goo"/>
+      </filter>
+    </svg>
+    <div class="sr" id="live" aria-live="polite"></div>
+  </section>
+
+  <div class="deck">
+    <div class="pad" id="pad" aria-label="On-screen keys">
+      <button type="button" class="cap w" data-k="Alt" aria-pressed="false">⌥ <small>hold</small></button>
+      <button type="button" class="cap w" data-k="Tab">tab</button>
+      <button type="button" class="cap xw" data-k="Space">space</button>
+      <div class="arrows">
+        <button type="button" class="cap up" data-k="ArrowUp" aria-label="Up">▲</button>
+        <button type="button" class="cap lf" data-k="ArrowLeft" aria-label="Left">◀</button>
+        <button type="button" class="cap dn" data-k="ArrowDown" aria-label="Down">▼</button>
+        <button type="button" class="cap rt" data-k="ArrowRight" aria-label="Right">▶</button>
+      </div>
+      <button type="button" class="cap w" data-k="Enter">return</button>
+      <button type="button" class="cap" data-k="Escape">esc</button>
+    </div>
+    <p class="pad-note">No keyboard? Tap <kbd>⌥</kbd> to hold it down, tap <kbd>tab</kbd> to cycle, then tap <kbd>⌥</kbd> again to let go and switch.</p>
+  </div>
+
+  <div class="cols">
+    <section class="card" aria-labelledby="knobs-h">
+      <div class="card-head">
+        <h2 id="knobs-h">Motion</h2>
+        <p class="readout" id="readout">Open the switcher to measure its entrance</p>
+        <button type="button" class="btn" id="replay">Replay entrance</button>
+      </div>
+      <div class="knob-grid">
+        <fieldset class="seg">
+          <legend>When you switch</legend>
+          <div class="opts">
+            <input type="radio" name="genie" id="genie-card" value="card"><label for="genie-card">Card flies to place</label>
+            <input type="radio" name="genie" id="genie-notch" value="notch"><label for="genie-notch">Pours from notch</label>
+            <input type="radio" name="genie" id="genie-none" value="none"><label for="genie-none">Instant</label>
+          </div>
+        </fieldset>
+        <div class="rng"><label for="speed">Spring speed</label><output id="o-speed" for="speed"></output><input type="range" id="speed" min="150" max="900" step="10"></div>
+        <div class="rng"><label for="bounce">Bounce</label><output id="o-bounce" for="bounce"></output><input type="range" id="bounce" min="0" max="60" step="2"></div>
+        <div class="rng"><label for="stagger">Stagger</label><output id="o-stagger" for="stagger"></output><input type="range" id="stagger" min="0" max="40" step="2"></div>
+        <div class="rng"><label for="delay">Hold-mode show delay</label><output id="o-delay" for="delay"></output><input type="range" id="delay" min="0" max="250" step="10"></div>
+        <div class="checks">
+          <label class="chk"><input type="checkbox" id="slow"> Slow motion ×6</label>
+          <label class="chk"><input type="checkbox" id="reduce"> Reduce motion (fade only)</label>
+        </div>
+      </div>
+      <p class="group-label">Context</p>
+      <div class="knob-grid">
+        <fieldset class="seg">
+          <legend>Windows open</legend>
+          <div class="opts">
+            <input type="radio" name="scen" id="scen-few" value="few"><label for="scen-few">5</label>
+            <input type="radio" name="scen" id="scen-typical" value="typical"><label for="scen-typical">11</label>
+            <input type="radio" name="scen" id="scen-many" value="many"><label for="scen-many">19</label>
+          </div>
+        </fieldset>
+        <div class="rng"><label for="flatMax">Show every window when at most</label><output id="o-flatMax" for="flatMax"></output><input type="range" id="flatMax" min="0" max="12" step="1"></div>
+        <fieldset class="seg">
+          <legend>Display</legend>
+          <div class="opts">
+            <input type="radio" name="display" id="display-notch" value="notch"><label for="display-notch">Built-in notch</label>
+            <input type="radio" name="display" id="display-external" value="external"><label for="display-external">External</label>
+          </div>
+        </fieldset>
+        <fieldset class="seg">
+          <legend>Wallpaper</legend>
+          <div class="opts">
+            <input type="radio" name="wall" id="wall-dusk" value="dusk"><label for="wall-dusk">Dark</label>
+            <input type="radio" name="wall" id="wall-day" value="day"><label for="wall-day">Light</label>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+
+    <div style="display:grid; gap:20px; min-width:0">
+      <section class="card" aria-labelledby="keys-h">
+        <h2 id="keys-h">Keys</h2>
+        <dl class="keys">
+          <div><dt><kbd>⌥</kbd> hold + <kbd>tab</kbd></dt><dd>Cycle apps (or windows, when few are open). Let go of ⌥ to switch.</dd></div>
+          <div><dt><kbd>⌥</kbd>&#8202;<kbd>space</kbd></dt><dd>Open and stay open. Plain <kbd>space</kbd> works here too.</dd></div>
+          <div><dt><kbd>◀</kbd>&#8202;<kbd>▶</kbd></dt><dd>Columns and Axle: next app. Loupe: next window.</dd></div>
+          <div><dt><kbd>▲</kbd>&#8202;<kbd>▼</kbd></dt><dd>Columns and Axle: windows of the selected app. Loupe: jump to the next app.</dd></div>
+          <div><dt>Any letter</dt><dd>Search window titles and apps, including apps that aren't open.</dd></div>
+          <div><dt><kbd>return</kbd> · <kbd>esc</kbd></dt><dd>Switch now · clear the search, then close.</dd></div>
+          <div><dt><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></dt><dd>While closed: change concept.</dd></div>
+        </dl>
+      </section>
+      <section class="card" aria-labelledby="log-h">
+        <h2 id="log-h">Switch log</h2>
+        <ol class="log" id="log"></ol>
+      </section>
+    </div>
+  </div>
+
+  <section class="judge" aria-labelledby="judge-h">
+    <h2 id="judge-h">What to judge</h2>
+    <ul>
+      <li><b>Columns.</b> Does the notch widening into a shelf feel like the hardware itself growing? Is ▲ ▼ inside a column as natural as niri's focus up and down?</li>
+      <li><b>Axle.</b> Does the wheel feel physical when you hold ▶? Can you still read the window fan while it spins? Try 5 windows to see windows ride the wheel directly.</li>
+      <li><b>Loupe.</b> Does the selected window read as being pulled out through the notch? With 19 windows, do the tiny menu-bar thumbnails help you, or are they noise?</li>
+      <li><b>Card flies vs pours from notch.</b> Which one feels faster? Compare both with Instant to see what the motion costs.</li>
+      <li><b>All at once.</b> Switch between 5 and 11 windows. Is six the right cut-off before grouping by app?</li>
+      <li><b>Hardware look.</b> Try the light wallpaper and the external display. Does the pure black still read as part of the Mac?</li>
+    </ul>
+    <p class="foot">Thumbnails are drawn placeholders. The real app would capture window images with Screen Recording access and fall back to icon-and-title cards without it. Per-app hotkeys replace pins and are not simulated here. Browser frame timing differs from a native panel, so treat durations as relative.</p>
+  </section>
+</main>
+
+<script>
+(() => {
+'use strict';
+const W = 1280, CX = 640, NW = 190, OFF = 40, TBW = 400, ISL = 62;
+const FX = 250, FY = 176, FW = 780, FH = 488;
+
+const GLY = {
+  browser: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.8 2.9 2.8 14.1 0 17M12 3.5c-2.8 2.9-2.8 14.1 0 17"/>',
+  editor: '<path d="M9 7l-5 5 5 5M15 7l5 5-5 5"/>',
+  terminal: '<path d="M5.5 8l4 4-4 4M12.5 16.5h6"/>',
+  mail: '<rect x="3.5" y="6" width="17" height="12.5" rx="2"/><path d="M4 7.5l8 5.5 8-5.5"/>',
+  chat: '<path d="M5.5 5h13A1.5 1.5 0 0 1 20 6.5v8a1.5 1.5 0 0 1-1.5 1.5H11l-4.5 3.5V16h-1A1.5 1.5 0 0 1 4 14.5v-8A1.5 1.5 0 0 1 5.5 5z"/>',
+  notes: '<rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4"/>',
+  design: '<circle cx="9" cy="9" r="5"/><rect x="10.5" y="10.5" width="9" height="9" rx="1.5"/>',
+  music: '<path d="M9 17.5V6l10-2v11.5"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="16.5" cy="15.5" r="2.5"/>',
+  calendar: '<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+  photos: '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3M6 6l2.1 2.1M15.9 15.9L18 18M6 18l2.1-2.1M15.9 8.1L18 6"/>',
+  files: '<path d="M3.5 7.5a2 2 0 0 1 2-2h3.8l2 2h7.2a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
+  maps: '<path d="M12 20.5s-6-5.3-6-10.5a6 6 0 0 1 12 0c0 5.2-6 10.5-6 10.5z"/><circle cx="12" cy="10" r="2.2"/>',
+  podcasts: '<circle cx="12" cy="10" r="2.4"/><path d="M12 14v6.5M7.6 14.6a6.2 6.2 0 1 1 8.8 0"/>',
+  books: '<path d="M4 6a1.5 1.5 0 0 1 1.5-1.5H11v15H5.5A1.5 1.5 0 0 1 4 18zM20 6a1.5 1.5 0 0 0-1.5-1.5H13v15h5.5A1.5 1.5 0 0 0 20 18z"/>',
+  calculator: '<rect x="5.5" y="3.5" width="13" height="17" rx="2"/><path d="M8.5 7.5h7M9 12h0M12 12h0M15 12h0M9 16h0M12 16h0M15 16h0"/>',
+  weather: '<path d="M7.5 18.5h9.5a3.8 3.8 0 0 0 .4-7.6A5.8 5.8 0 0 0 6.3 11.6a3.5 3.5 0 0 0 1.2 6.9z"/>',
+  reminders: '<path d="M10 7h10M10 12h10M10 17h10"/><circle cx="5.5" cy="7" r="1.2"/><circle cx="5.5" cy="12" r="1.2"/><circle cx="5.5" cy="17" r="1.2"/>',
+  video: '<rect x="3.5" y="6.5" width="11.5" height="11" rx="2"/><path d="M15 10.5l5.5-3v9l-5.5-3z"/>',
+  settings: '<path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2"/><circle cx="9" cy="16" r="2"/>',
+  preview: '<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M4 16l4.5-4.5 4 4 2.5-2.5 5 5"/>'
+};
+const APPS = {
+  browser: { name: 'Browser', c: ['#5ab0ff', '#1f5fd1'], k: 'web' },
+  editor: { name: 'Code Editor', c: ['#6e93ff', '#3446c9'], k: 'code' },
+  terminal: { name: 'Terminal', c: ['#4a5059', '#16181c'], k: 'term' },
+  chat: { name: 'Chat', c: ['#63d28f', '#1e9a55'], k: 'chat' },
+  mail: { name: 'Mail', c: ['#5cb8ff', '#2878e0'], k: 'mail' },
+  notes: { name: 'Notes', c: ['#ffd463', '#f0a12a'], k: 'notes' },
+  design: { name: 'Design Tool', c: ['#ff8a70', '#c93a6c'], k: 'design' },
+  music: { name: 'Music', c: ['#ff6a85', '#d42a5c'], k: 'music' },
+  calendar: { name: 'Calendar', c: ['#ff7466', '#de3b30'], k: 'cal' },
+  files: { name: 'Files', c: ['#72c6ff', '#2e8ae2'], k: 'files' },
+  video: { name: 'Video Call', c: ['#55d4c8', '#1b8b98'], k: 'video' },
+  photos: { name: 'Photos', c: ['#ffbe55', '#ef6b38'], k: 'photos' },
+  maps: { name: 'Maps', c: ['#80d97e', '#2b9f88'], k: 'web' },
+  podcasts: { name: 'Podcasts', c: ['#c785ff', '#7a3ed6'], k: 'music' },
+  books: { name: 'Books', c: ['#ffae55', '#e5700c'], k: 'doc' },
+  calculator: { name: 'Calculator', c: ['#9298a2', '#4a4f57'], k: 'doc' },
+  weather: { name: 'Weather', c: ['#6bbdff', '#3567d8'], k: 'web' },
+  reminders: { name: 'Reminders', c: ['#8592a8', '#4b576d'], k: 'notes' },
+  settings: { name: 'System Settings', c: ['#a0a6b0', '#5a606a'], k: 'doc' },
+  preview: { name: 'Preview', c: ['#86b6ff', '#4a6ee0'], k: 'photos' }
+};
+const TYPICAL = [
+  ['editor', 'notch-islands — IslandsPanel.swift'], ['browser', 'NSPanel reference — developer docs'], ['chat', '#design-review'],
+  ['editor', 'notch-islands — Motion.swift'], ['terminal', '~/notch-islands — swift build'], ['browser', 'Team board — Launcher v0.2'],
+  ['mail', 'Inbox — 3 unread'], ['notes', 'Launcher ideas'], ['terminal', 'ssh staging'], ['music', 'Now Playing'], ['browser', 'Motion references']
+];
+const SCEN = {
+  few: [['editor', 'notch-islands — IslandsPanel.swift'], ['browser', 'NSPanel reference — developer docs'], ['chat', '#design-review'], ['editor', 'notch-islands — Motion.swift'], ['music', 'Now Playing']],
+  typical: TYPICAL,
+  many: TYPICAL.concat([['design', 'Islands — motion frames'], ['files', 'Downloads'], ['calendar', 'Week of 5 October'], ['editor', 'dotfiles — .zshrc'],
+    ['video', 'Weekly sync'], ['notes', 'Island sizes'], ['design', 'Icon grid'], ['files', 'notch-islands']])
+};
+
+const $ = (s) => document.querySelector(s);
+const vp = $('#viewport'), screenEl = $('#screen'), gooL = $('#goo-layer'), faceL = $('#face-layer'), notch = $('#notch'),
+  statusEl = $('#status'), live = $('#live'), frontEl = $('#win-front'), backEl = $('#win-back'), scrim = $('#scrim');
+
+const cfg = { concept: 'columns', genie: 'card', speed: 420, bounce: 16, stagger: 12, delay: 0, slow: false,
+  reduce: matchMedia('(prefers-reduced-motion: reduce)').matches, scen: 'typical', flatMax: 6, display: 'notch', wall: 'dusk' };
+try { Object.assign(cfg, JSON.parse(localStorage.getItem('notch-lab-cfg') || '{}')); } catch (e) { /* storage unavailable */ }
+if (!SCEN[cfg.scen]) cfg.scen = 'typical';
+if (!['columns', 'axle', 'loupe'].includes(cfg.concept)) cfg.concept = 'columns';
+const save = () => { try { localStorage.setItem('notch-lab-cfg', JSON.stringify(cfg)); } catch (e) { /* ignore */ } };
+
+const S = { open: false, shown: false, mode: null, query: '', fi: 0, ai: 0, wi: 0, wins: [], openedAt: 0, keys: 0, timer: 0,
+  latch: false, log: [], justOpened: false, measure: 0, uid: 0, lastLive: '', flyer: null };
+
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const now = () => performance.now();
+const slowF = () => (cfg.slow ? 6 : 1);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const iconHTML = (id, size) => { const a = APPS[id]; return `<span class="ico ${size}" style="background:linear-gradient(160deg,${a.c[0]},${a.c[1]})"><svg viewBox="0 0 24 24" aria-hidden="true">${GLY[id]}</svg></span>`; };
+
+/* ---------- mock window contents ---------- */
+function rng(seed) { let s = 7; for (const ch of seed) s = (s * 31 + ch.charCodeAt(0)) | 0; s = Math.abs(s) || 1; return () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; }; }
+const bars = (r, n, lo, hi) => Array.from({ length: n }, () => `<i style="width:${lo + Math.floor(r() * (hi - lo))}%"></i>`).join('');
+const hue = (r) => Math.floor(r() * 360);
+const BODY = {
+  code: (r) => `<div class="cd-side">${bars(r, 9, 45, 95)}</div><div class="cd-main">${Array.from({ length: 14 }, () => {
+    const n = 1 + Math.floor(r() * 3);
+    return `<div class="cd-ln"><b></b><span style="margin-left:${Math.floor(r() * 3) * 12}px">${Array.from({ length: n }, () => `<i class="c${Math.floor(r() * 4)}" style="width:${14 + Math.floor(r() * 56)}px"></i>`).join('')}</span></div>`;
+  }).join('')}</div>`,
+  web: (r) => { const h = hue(r); return `<div class="wb-url"></div><div class="wb-hero" style="background:linear-gradient(120deg,hsl(${h} 75% 62%),hsl(${(h + 50) % 360} 70% 50%))"></div><div class="wb-lines">${bars(r, 3, 40, 95)}</div><div class="wb-cards"><i></i><i></i><i></i></div>`; },
+  term: (r) => Array.from({ length: 17 }, (_, i) => { const p = i % 4 === 0; return `<div class="tm-ln">${p ? '<b></b>' : ''}<i class="${p ? 'g' : ''}" style="width:${18 + Math.floor(r() * 62)}%"></i></div>`; }).join(''),
+  chat: (r) => `<div class="ch-side">${bars(r, 9, 40, 90)}</div><div class="ch-main">${Array.from({ length: 5 }, () => `<div class="ch-msg"><b style="background:hsl(${hue(r)} 60% 62%)"></b><div>${bars(r, 1 + Math.floor(r() * 2), 30, 95)}</div></div>`).join('')}</div>`,
+  mail: (r) => `<div class="ml-list">${Array.from({ length: 7 }, (_, i) => `<div class="ml-row${i === 1 ? ' on' : ''}">${bars(r, 2, 40, 95)}</div>`).join('')}</div><div class="ml-read">${bars(r, 10, 45, 98)}</div>`,
+  notes: (r) => `<div class="nt"><i style="width:48%"></i>${bars(r, 11, 40, 96)}</div>`,
+  design: (r, a) => `<div class="dz"><div class="dz-art"><b style="background:${a.c[0]}"></b><s style="background:hsl(${hue(r)} 70% 60%)"></s><i></i></div></div>`,
+  music: (r) => { const h = hue(r); return `<div class="mu-side">${bars(r, 7, 40, 90)}</div><div class="mu-main"><div class="mu-art" style="background:linear-gradient(135deg,hsl(${h} 80% 62%),hsl(${(h + 70) % 360} 70% 38%))"></div><div class="mu-rows">${bars(r, 9, 40, 95)}</div></div>`; },
+  cal: (r) => `<div class="cl">${Array.from({ length: 28 }, () => `<div>${r() < 0.32 ? `<i style="background:hsl(${hue(r)} 65% 62%)"></i>` : ''}</div>`).join('')}</div>`,
+  files: (r) => `<div class="fl">${Array.from({ length: 12 }, () => `<div><b style="filter:hue-rotate(${Math.floor(r() * 40) - 20}deg)"></b><i></i></div>`).join('')}</div>`,
+  video: (r) => `<div class="vd">${[0, 1, 2, 3].map(() => `<div><b style="background:hsl(${hue(r)} 45% 60%)"></b></div>`).join('')}</div>`,
+  photos: (r) => `<div class="ph">${Array.from({ length: 20 }, () => `<i style="background:hsl(${hue(r)} 55% ${42 + Math.floor(r() * 26)}%)"></i>`).join('')}</div>`,
+  doc: (r) => `<div class="dc"><i style="width:46%"></i>${bars(r, 12, 45, 98)}</div>`
+};
+const DARK = new Set(['code', 'term', 'music', 'video']);
+const KCLASS = { web: 'k-web', term: 'k-term' };
+function winHTML(w) {
+  const a = APPS[w.app], r = rng(w.uid + w.t);
+  return `<div class="wt k-${w.k}-w${DARK.has(w.k) ? ' dk' : ''}"><div class="wt-bar"><i></i><i></i><i></i><span>${esc(w.t)}</span></div><div class="wb ${KCLASS[w.k] || ''}">${BODY[w.k](r, a)}</div></div>`;
+}
+
+/* ---------- model ---------- */
+function appsOrder() { const out = []; for (const w of S.wins) if (!out.includes(w.app)) out.push(w.app); return out; }
+const winsOf = (app) => S.wins.filter((w) => w.app === app);
+const itemKey = (it) => (it.type === 'win' ? it.w.uid : 'a-' + it.app);
+const itemApp = (it) => (it.type === 'win' ? it.w.app : it.app);
+function score(text, q) {
+  const n = text.toLowerCase();
+  if (n.startsWith(q)) return 100;
+  if (n.split(/[\s—\-./~#]+/).some((p) => p && p.startsWith(q))) return 80;
+  if (n.includes(q)) return 50;
+  return -1;
+}
+function search(q) {
+  const res = [];
+  S.wins.forEach((w, i) => { const s = Math.max(score(APPS[w.app].name, q), score(w.t, q) - 4); if (s >= 0) res.push({ type: 'win', w, s: s + 10 - i * 0.3 }); });
+  Object.keys(APPS).forEach((id) => { if (S.wins.some((w) => w.app === id)) return; const s = score(APPS[id].name, q); if (s >= 0) res.push({ type: 'app', app: id, s }); });
+  return res.sort((a, b) => b.s - a.s).slice(0, 6);
+}
+const q = () => S.query.trim().toLowerCase();
+const isFlat = () => !!q() || S.wins.length <= cfg.flatMax;
+const flatList = () => (q() ? search(q()) : S.wins.map((w) => ({ type: 'win', w })));
+function defaultWi(ai) { const A = appsOrder(); const n = A[ai] ? winsOf(A[ai]).length : 0; return ai === 0 && n > 1 ? 1 : 0; }
+function selTarget() {
+  if (isFlat()) return flatList()[S.fi] || null;
+  const A = appsOrder(), app = A[S.ai];
+  if (!app) return null;
+  const ws = winsOf(app);
+  return { type: 'win', w: ws[clamp(S.wi, 0, ws.length - 1)] };
+}
+function linearList() { const L = []; appsOrder().forEach((app, ai) => winsOf(app).forEach((w, wi) => L.push({ type: 'win', w, ai, wi }))); return L; }
+function linIndex() { const A = appsOrder(); let n = 0; for (let i = 0; i < S.ai; i++) n += winsOf(A[i]).length; return n + S.wi; }
+
+/* ---------- spring node engine ---------- */
+const nodes = new Map();
+const ptr = { x: -1, y: -1 }; // last real pointer position; moving cards under a still cursor must not steal the selection
+const DEF ={ x: CX, y: 17, w: 0, h: 0, s: 1, rot: 0, o: 0, ang: 90, r: 24 };
+const PROPS = ['x', 'y', 'w', 'h', 's', 'rot', 'o', 'ang', 'r'];
+function defFrom(sp) {
+  if (sp.kind === 'panel') return { x: CX, y: 2, w: NW, h: 64 };
+  if (sp.polar) return { ang: 90, r: 24, s: 0.35, o: 0 };
+  return { x: CX, y: 17, w: (sp.t.w || 40) * 0.25, h: (sp.t.h || 24) * 0.25, s: 1, rot: 0, o: 0 };
+}
+function buildEl(sp) {
+  const el = document.createElement('div');
+  el.className = 'nd nd-' + sp.kind;
+  if (sp.kind === 'card') {
+    const it = sp.item;
+    el.innerHTML = (it.type === 'win' ? `<div class="frame"><div class="thumb">${winHTML(it.w)}</div></div>` : `<div class="frame launch">${iconHTML(it.app, 'xl')}</div>`) + '<div class="cap"></div>';
+    if (sp.radius) el.style.setProperty('--r', sp.radius + 'px');
+  } else if (sp.kind === 'island') {
+    el.innerHTML = `<div class="isl-in"><div class="ring"></div>${iconHTML(sp.app, 'md')}</div>`;
+  } else if (sp.kind === 'header') {
+    el.innerHTML = `${iconHTML(sp.app, 'sm')}<span>${esc(APPS[sp.app].name)}</span>`;
+  }
+  return el;
+}
+function createNode(sp) {
+  const n = { key: sp.key, kind: sp.kind, spec: sp, cur: {}, vel: {}, target: {}, leaving: false, el: null, blob: null, delayUntil: 0 };
+  const start = S.justOpened ? (sp.from || defFrom(sp)) : (sp.fromOpen || sp.from || defFrom(sp));
+  n.cur = cfg.reduce ? { ...DEF, ...sp.t, o: 0 } : { ...DEF, ...sp.t, ...start };
+  if (sp.kind !== 'panel') {
+    n.el = buildEl(sp);
+    faceL.appendChild(n.el);
+    n.el.addEventListener('mousemove', (e) => {
+      if (e.clientX === ptr.x && e.clientY === ptr.y) return;
+      ptr.x = e.clientX; ptr.y = e.clientY;
+      if (!S.open || !S.shown || n.leaving || !n.spec.pick) return;
+      if (applyPick(n.spec.pick)) sync();
+    });
+    n.el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!S.open || n.leaving || !n.spec.pick) return;
+      applyPick(n.spec.pick); S.keys++;
+      commit('click');
+    });
+  }
+  if (sp.blob) {
+    n.blob = document.createElement('div');
+    n.blob.className = 'bl';
+    n.blob.style.borderRadius = sp.blob.radius + 'px';
+    gooL.appendChild(n.blob);
+  }
+  nodes.set(sp.key, n);
+  apply(n);
+  return n;
+}
+function destroyNode(n) { if (n.el) n.el.remove(); if (n.blob) n.blob.remove(); nodes.delete(n.key); }
+function destroyAll() { [...nodes.values()].forEach(destroyNode); }
+function place(n) {
+  const c = n.cur, p = n.spec.polar;
+  if (!p) return { x: c.x, y: c.y, rot: c.rot };
+  const a = (c.ang * Math.PI) / 180;
+  return { x: p.cx + c.r * Math.cos(a), y: p.cy + c.r * Math.sin(a), rot: c.rot + (c.ang - 90) * (p.lean || 0) };
+}
+function apply(n) {
+  const c = n.cur, p = place(n);
+  const w = Math.max(0, c.w), h = Math.max(0, c.h), s = Math.max(0, c.s);
+  if (n.el) {
+    n.el.style.transform = `translate3d(${(p.x - w / 2).toFixed(1)}px,${(p.y - h / 2 + OFF).toFixed(1)}px,0) rotate(${p.rot.toFixed(2)}deg) scale(${s.toFixed(4)})`;
+    n.el.style.width = w.toFixed(1) + 'px';
+    n.el.style.height = h.toFixed(1) + 'px';
+    if (n.kind === 'card') n.el.style.setProperty('--k', (w / TBW).toFixed(4));
+    n.el.style.opacity = clamp(c.o, 0, 1).toFixed(3);
+  }
+  if (n.blob) {
+    const pad = n.spec.blob.pad || 0, bw = w + pad * 2, bh = h + pad * 2;
+    n.blob.style.transform = `translate3d(${(p.x - bw / 2).toFixed(1)}px,${(p.y - bh / 2 + OFF).toFixed(1)}px,0) rotate(${p.rot.toFixed(2)}deg) scale(${s.toFixed(4)})`;
+    n.blob.style.width = bw.toFixed(1) + 'px';
+    n.blob.style.height = bh.toFixed(1) + 'px';
+    n.blob.style.opacity = n.kind === 'panel' ? '1' : clamp(c.o * 1.6, 0, 1).toFixed(3);
+  }
+}
+function updateEl(n, sp) {
+  if (!n.el) return;
+  n.el.classList.toggle('sel', !!sp.sel);
+  n.el.style.zIndex = sp.z || 1;
+  if (sp.kind === 'card') {
+    const cap = n.el.querySelector('.cap'), html = sp.cap || '';
+    if (cap._h !== html) { cap.innerHTML = html; cap._h = html; }
+    cap.hidden = !html;
+  } else if ((sp.kind === 'label' || sp.kind === 'more') && n.el._h !== sp.html) {
+    n.el.innerHTML = sp.html; n.el._h = sp.html;
+  }
+}
+let raf = 0, lastT = 0;
+function kick() { if (!raf) { lastT = now(); raf = requestAnimationFrame(tick); } }
+function tick(t) {
+  raf = 0;
+  const dt = Math.min(0.05, Math.max(0, (t - lastT) / 1000)) / slowF();
+  lastT = t;
+  const k = cfg.speed, c = 2 * (1 - cfg.bounce / 100) * Math.sqrt(k);
+  const ko = k * 1.6, co = 2 * Math.sqrt(ko);
+  let active = false;
+  for (const n of nodes.values()) {
+    if (n.delayUntil && t < n.delayUntil) { active = true; continue; }
+    let moving = false;
+    for (const p of PROPS) {
+      const tg = n.target[p];
+      if (tg === undefined) continue;
+      let x = n.cur[p], v = n.vel[p] || 0;
+      const kk = p === 'o' ? ko : k, cc = p === 'o' ? co : c;
+      let rem = dt;
+      while (rem > 1e-6) { const h = Math.min(rem, 1 / 240); v += (-kk * (x - tg) - cc * v) * h; x += v * h; rem -= h; }
+      const eps = p === 's' || p === 'o' ? 0.003 : p === 'ang' ? 0.05 : 0.3;
+      if (Math.abs(x - tg) < eps && Math.abs(v) < eps * 8) { x = tg; v = 0; } else moving = true;
+      n.cur[p] = x; n.vel[p] = v;
+    }
+    apply(n);
+    if (moving) active = true;
+    else if (n.leaving) destroyNode(n);
+  }
+  if (active) kick();
+  else if (S.measure && S.open) {
+    const ms = Math.round(now() - S.measure);
+    $('#readout').innerHTML = `Last entrance settled in <b>${ms} ms</b>${cfg.slow ? ' (×6 slow)' : ''}`;
+    S.measure = 0;
+  }
+}
+
+/* ---------- layouts ---------- */
+const capHTML = (it, extra = '') => it.type === 'win'
+  ? `${iconHTML(it.w.app, 'xs')}<span>${esc(it.w.t)}</span>${extra}`
+  : `${iconHTML(it.app, 'xs')}<span>Open ${esc(APPS[it.app].name)}</span>${extra}`;
+function panelSpec(key, t, from, radius) { return { key, kind: 'panel', t: { s: 1, rot: 0, o: 1, ...t }, from, exit: from, blob: { pad: 0, radius } }; }
+
+function layoutColumns() {
+  const out = [];
+  if (isFlat()) {
+    const L = flatList(), n = L.length, cw = 180, ch = 112, step = 200, top = 76;
+    L.forEach((it, k) => {
+      const sel = k === S.fi;
+      out.push({ key: 'w:' + itemKey(it), kind: 'card', item: it, t: { x: CX + (k - (n - 1) / 2) * step, y: top + ch / 2, w: cw, h: ch, s: sel ? 1.07 : 1, rot: 0, o: 1 },
+        sel, cap: capHTML(it), pick: { fi: k }, delay: 40 + Math.abs(k - S.fi) * cfg.stagger, z: sel ? 30 : 20 });
+    });
+    const bottom = top + ch + 50;
+    out.push(panelSpec('panel', { x: CX, y: (bottom - 30) / 2, w: Math.max(NW + 140, n * step + 28), h: bottom + 30 }, { x: CX, y: 2, w: NW, h: 64 }, 30));
+    return out;
+  }
+  const A = appsOrder(), cw = 168, ch = 105, step = 222, top = 100, cstep = 140, MAXS = 3;
+  let maxStack = 1, anyMore = false;
+  A.forEach((app, i) => {
+    const d = i - S.ai, ad = Math.abs(d);
+    if (ad > 3) return;
+    const x = CX + d * step, fade = [1, 0.9, 0.72, 0.28][ad], sc = d === 0 ? 1 : 0.93, side = Math.sign(d) || 1;
+    out.push({ key: 'h:' + app, kind: 'header', app, t: { x, y: 72, w: cw, h: 24, s: sc, rot: 0, o: fade }, pick: { ai: i }, z: 5,
+      delay: ad * 2 * cfg.stagger + 30, fromOpen: { x: x + side * step, o: 0 }, exitOpen: { x: x + side * step, o: 0 } });
+    const ws = winsOf(app), vis = Math.min(MAXS, ws.length);
+    maxStack = Math.max(maxStack, vis);
+    const start = d === 0 ? clamp(S.wi - (MAXS - 1), 0, Math.max(0, ws.length - MAXS)) : 0;
+    for (let k = 0; k < vis; k++) {
+      const w = ws[start + k], sel = d === 0 && start + k === S.wi, y = top + k * cstep + ch / 2;
+      out.push({ key: 'w:' + w.uid, kind: 'card', item: { type: 'win', w }, t: { x, y, w: cw, h: ch, s: sel ? 1.05 : sc, rot: 0, o: fade },
+        sel, cap: `<span>${esc(w.t)}</span>`, pick: { ai: i, wi: start + k }, z: sel ? 30 : 20 - ad,
+        delay: (ad * 2 + k) * cfg.stagger + 50, fromOpen: { x: x + side * step, o: 0 }, exitOpen: { o: 0, s: 0.9 } });
+    }
+    if (ws.length > MAXS) {
+      anyMore = true;
+      out.push({ key: 'm:' + app, kind: 'more', html: `+${ws.length - MAXS} more`, t: { x, y: top + MAXS * cstep - 4, w: cw, h: 18, s: sc, rot: 0, o: fade * 0.9 },
+        z: 4, delay: ad * 2 * cfg.stagger + 90, fromOpen: { x: x + side * step, o: 0 }, exitOpen: { o: 0 } });
+    }
+  });
+  const bottom = top + maxStack * cstep - (cstep - ch) + 38 + (anyMore ? 16 : 0);
+  out.push(panelSpec('panel', { x: CX, y: (bottom - 30) / 2, w: Math.min(W - 48, Math.min(7, A.length) * step + 30), h: bottom + 30 }, { x: CX, y: 2, w: NW, h: 64 }, 30));
+  return out;
+}
+
+function layoutAxle() {
+  const out = [], cy = -14;
+  if (isFlat()) {
+    const L = flatList(), R = 360, stepA = 26, cw = 150, ch = 94;
+    L.forEach((it, k) => {
+      const d = k - S.fi, ang = 90 - d * stepA, sel = d === 0;
+      out.push({ key: 'w:' + itemKey(it), kind: 'card', item: it, polar: { cx: CX, cy, lean: 0.55 },
+        t: { ang, r: R, w: cw, h: ch, s: sel ? 1.32 : 1, rot: 0, o: ang > -6 && ang < 186 ? 1 : 0 },
+        from: { ang: 90, r: 30, w: cw * 0.3, h: ch * 0.3, s: 1, o: 0 }, sel, cap: sel ? capHTML(it) : '', pick: { fi: k },
+        delay: Math.abs(d) * cfg.stagger + 30, z: sel ? 40 : 30 - Math.abs(d), radius: 9 });
+    });
+    return out;
+  }
+  const A = appsOrder(), R = 250, stepA = 20, iy = cy + R;
+  A.forEach((app, i) => {
+    const d = i - S.ai, ang = 90 - d * stepA, sel = d === 0;
+    out.push({ key: 'i:' + app, kind: 'island', app, polar: { cx: CX, cy, lean: 0 },
+      t: { ang, r: R, w: ISL, h: ISL, s: sel ? 1.22 : 1, rot: 0, o: ang > -12 && ang < 192 ? 1 : 0 },
+      from: { ang: 90, r: 24, w: ISL, h: ISL, s: 0.35, o: 0 }, blob: { pad: 0, radius: ISL / 2 }, sel, pick: { ai: i },
+      delay: Math.abs(d) * cfg.stagger, z: sel ? 40 : 30 });
+  });
+  const app = A[S.ai], ws = winsOf(app);
+  out.push({ key: 'lbl', kind: 'label', html: `<span class="pill"><b>${esc(APPS[app].name)}</b><em>${ws.length} window${ws.length === 1 ? '' : 's'}${ws.length > 1 ? ' · ▲ ▼' : ''}</em></span>`,
+    t: { x: CX, y: iy + 60, w: 320, h: 26, s: 1, rot: 0, o: 1 }, from: { x: CX, y: iy, w: 320, h: 26, s: 0.6, o: 0 }, z: 35 });
+  const n = Math.min(4, ws.length), start = clamp(S.wi - 3, 0, Math.max(0, ws.length - 4));
+  const isl = { x: CX, y: iy, w: 40, h: 25, s: 1, rot: 0, o: 0 };
+  for (let k = 0; k < n; k++) {
+    const w = ws[start + k], d = k - (n - 1) / 2, sel = start + k === S.wi;
+    out.push({ key: 'f:' + w.uid, kind: 'card', item: { type: 'win', w },
+      t: { x: CX + d * 178, y: iy + 158 + Math.abs(d) * 16 - (sel ? 14 : 0), w: 192, h: 120, s: sel ? 1.08 : 1, rot: d * 5, o: 1 },
+      from: isl, fromOpen: isl, exitOpen: isl, sel, cap: `<span>${esc(w.t)}</span>`, pick: { ai: S.ai, wi: start + k },
+      delay: 50 + k * cfg.stagger, z: sel ? 60 : 50 - Math.abs(d) });
+  }
+  return out;
+}
+
+function layoutLoupe() {
+  const out = [], flat = isFlat();
+  const items = flat ? flatList().map((it, fi) => ({ ...it, fi })) : linearList();
+  const si = flat ? S.fi : linIndex();
+  const sel = items[si];
+  if (!sel) return out;
+  const baseW = flat ? 104 : 46, baseH = baseW * 0.625, mag = flat ? 0.22 : 0.6, top = flat ? 112 : 60, PW = 460, PH = 288;
+  const lens = { x: CX, y: 17, s: 0.5, o: 0 };
+  let minL = CX - NW / 2 - 12, maxR = CX + NW / 2 + 12;
+  for (const side of [-1, 1]) {
+    let edge = NW / 2 + 10, prevApp = itemApp(sel);
+    for (let d = 1; ; d++) {
+      const j = si + side * d;
+      if (j < 0 || j >= items.length) break;
+      const it = items[j], s = 1 + mag * Math.exp(-Math.pow((d - 1) / 1.6, 2)), w = baseW * s;
+      if (d > 1) edge += !flat && itemApp(it) !== prevApp ? 16 : 7;
+      const x = CX + side * (edge + w / 2);
+      edge += w;
+      prevApp = itemApp(it);
+      const on = x + w / 2 > -60 && x - w / 2 < W + 60;
+      if (on) { minL = Math.min(minL, x - w / 2 - 10); maxR = Math.max(maxR, x + w / 2 + 10); }
+      out.push({ key: 'c:' + itemKey(it), kind: 'card', item: it, t: { x, y: 3 + (baseH * s) / 2, w: baseW, h: baseH, s, rot: 0, o: on ? 1 : 0 },
+        from: lens, fromOpen: lens, exitOpen: lens, blob: { pad: 2.5, radius: flat ? 10 : 6 }, radius: flat ? 8 : 4,
+        pick: flat ? { fi: it.fi } : { ai: it.ai, wi: it.wi }, delay: d * cfg.stagger * 0.6 + 40, z: 20 - d });
+    }
+  }
+  minL = Math.max(6, minL); maxR = Math.min(W - 6, maxR);
+  out.push(panelSpec('band', { x: (minL + maxR) / 2, y: 2, w: maxR - minL, h: 64 }, { x: CX, y: 2, w: NW, h: 64 }, 16));
+  out.push(panelSpec('neck', { x: CX, y: (24 + top + 8) / 2, w: flat ? 72 : 92, h: top + 8 - 24 }, { x: CX, y: 22, w: 60, h: 12 }, 14));
+  const drop = { x: CX, y: 20, w: PW * 0.18, h: PH * 0.18, s: 1, o: 0 };
+  out.push({ key: 'pv:' + itemKey(sel), kind: 'card', item: sel, t: { x: CX, y: top + PH / 2, w: PW, h: PH, s: 1, rot: 0, o: 1 },
+    from: drop, fromOpen: drop, exitOpen: drop, blob: { pad: 5, radius: 17 }, radius: 12, sel: true,
+    cap: capHTML(sel, `<em>${si + 1} of ${items.length}</em>`), pick: flat ? { fi: si } : { ai: sel.ai, wi: sel.wi }, delay: 20, z: 60 });
+  return out;
+}
+
+function querySpec() {
+  if (!S.query) return null;
+  const none = flatList().length === 0;
+  return { key: 'q', kind: 'label', z: 90,
+    html: `<span class="pill"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg><span>${esc(S.query)}</span><i class="caret"></i>${none ? '<em>no matches</em>' : ''}</span>`,
+    t: { x: CX, y: cfg.concept === 'loupe' ? 84 : 50, w: 360, h: 26, s: 1, rot: 0, o: 1 }, from: { x: CX, y: 30, w: 360, h: 26, s: 0.8, o: 0 } };
+}
+function layout() {
+  if (!S.open || !S.shown) return [];
+  const L = cfg.concept === 'axle' ? layoutAxle() : cfg.concept === 'loupe' ? layoutLoupe() : layoutColumns();
+  const qs = querySpec();
+  if (qs) L.push(qs);
+  return L;
+}
+
+function sync() {
+  const specs = layout(), seen = new Set(), t = now();
+  for (const sp of specs) {
+    seen.add(sp.key);
+    let n = nodes.get(sp.key);
+    if (n && n.kind !== sp.kind) { destroyNode(n); n = null; }
+    if (!n) { n = createNode(sp); n.delayUntil = cfg.reduce ? 0 : t + (sp.delay || 0) * slowF(); }
+    else if (n.leaving) { n.leaving = false; if (n.el) n.el.classList.remove('leaving'); }
+    n.spec = sp;
+    n.target = { ...DEF, ...sp.t };
+    updateEl(n, sp);
+  }
+  for (const n of nodes.values()) {
+    if (seen.has(n.key) || n.leaving) continue;
+    n.leaving = true;
+    if (n.el) n.el.classList.add('leaving');
+    const sp = n.spec;
+    const exit = cfg.reduce ? { o: 0 } : S.open ? (sp.exitOpen || sp.exit || defFrom(sp)) : (sp.exit || defFrom(sp));
+    n.target = { ...n.target, ...exit };
+    n.delayUntil = 0;
+  }
+  S.justOpened = false;
+  kick();
+  chrome();
+}
+
+/* ---------- chrome around the overlay ---------- */
+function chrome() {
+  const vis = S.open && S.shown;
+  scrim.classList.toggle('on', vis && cfg.concept !== 'columns');
+  notch.classList.toggle('on', vis);
+  let st;
+  if (document.activeElement !== vp) st = 'Click the screen to use your keyboard';
+  else if (!S.open) st = 'Hold ⌥ and tap tab, or press ⌥ space · 1 2 3 change concept';
+  else if (S.mode === 'hold') st = S.latch ? '⌥ held · tap tab to cycle · tap ⌥ to switch' : 'Holding ⌥ · tab cycles · let go to switch';
+  else if (S.query) st = 'Searching · ◀ ▶ choose · return switches · esc clears';
+  else if (isFlat()) st = 'All windows shown · ◀ ▶ choose · type to search · esc closes';
+  else if (cfg.concept === 'loupe') st = '◀ ▶ windows · ▲ ▼ jump app · type to search · esc closes';
+  else st = '◀ ▶ apps · ▲ ▼ windows · type to search · esc closes';
+  statusEl.textContent = st;
+  const it = vis ? selTarget() : null;
+  const say = it ? (it.type === 'win' ? `${APPS[it.w.app].name}, ${it.w.t}` : `Open ${APPS[it.app].name}`) : '';
+  if (say && say !== S.lastLive) live.textContent = say;
+  S.lastLive = say;
+}
+function renderDesktop() {
+  const f = S.wins[0], b = S.wins[1];
+  frontEl.innerHTML = f ? `<div class="thumb">${winHTML(f)}</div>` : '';
+  frontEl.hidden = !f;
+  backEl.innerHTML = b ? `<div class="thumb">${winHTML(b)}</div>` : '';
+  backEl.hidden = !b;
+  $('#mb-app').textContent = f ? APPS[f.app].name : 'Finder';
+}
+const fmtMs = (ms) => (ms < 1000 ? Math.round(ms) + ' ms' : (ms / 1000).toFixed(2) + ' s');
+const CNAME = { columns: 'Columns', axle: 'Axle', loupe: 'Loupe' };
+function renderLog() {
+  const el = $('#log');
+  if (!S.log.length) { el.innerHTML = '<li class="empty">Each switch lands here with the concept, how many keys it took and the time from hotkey to switch.</li>'; return; }
+  el.innerHTML = S.log.map((r) => `<li><span class="lv">${CNAME[r.concept]}</span><span class="lt">${esc(APPS[r.app].name)} <em>· ${esc(r.title)}${r.shown ? '' : ' · never shown'}</em></span><span class="lm">${r.keys} key${r.keys === 1 ? '' : 's'} · ${fmtMs(r.ms)}</span></li>`).join('');
+}
+
+/* ---------- switching ---------- */
+const NOTCH_SRC = { x: CX - 60, y: 0, w: 120, h: 30 };
+function genie(w, src) {
+  if (S.flyer) S.flyer.finish();
+  const fl = document.createElement('div');
+  fl.className = 'flyer';
+  fl.innerHTML = `<div class="thumb">${winHTML(w)}</div>`;
+  screenEl.appendChild(fl);
+  const sx = src.w / FW, sy = src.h / FH, tx = src.x - FX, ty = src.y - FY;
+  const at = (pT, pX, pY) => `translate(${(tx * (1 - pT)).toFixed(1)}px,${(ty * (1 - pT)).toFixed(1)}px) scale(${(sx + (1 - sx) * pX).toFixed(4)},${(sy + (1 - sy) * pY).toFixed(4)})`;
+  const fromNotch = cfg.genie === 'notch';
+  const frames = fromNotch
+    ? [{ transform: at(0, 0, 0), borderRadius: '60px', opacity: 0.6 }, { transform: at(0.45, 0.14, 0.72), borderRadius: '40px', opacity: 1, offset: 0.45 }, { transform: at(1, 1, 1), borderRadius: '12px', opacity: 1 }]
+    : [{ transform: at(0, 0, 0) }, { transform: at(0.55, 0.38, 0.82), offset: 0.5 }, { transform: at(1, 1, 1) }];
+  frontEl.style.visibility = 'hidden';
+  const an = fl.animate(frames, { duration: (fromNotch ? 300 : 270) * slowF(), easing: 'cubic-bezier(.3,.6,.2,1)' });
+  S.flyer = an;
+  const done = () => { fl.remove(); frontEl.style.visibility = ''; if (S.flyer === an) S.flyer = null; };
+  an.onfinish = done;
+  an.oncancel = done;
+}
+function swapFade() { frontEl.classList.remove('swap'); void frontEl.offsetWidth; frontEl.classList.add('swap'); }
+function commit(via) {
+  if (!S.open) return;
+  const it = selTarget();
+  if (!it) { closePanel(); return; }
+  let w;
+  if (it.type === 'win') w = it.w;
+  else { const a = APPS[it.app]; w = { uid: 'u' + ++S.uid, app: it.app, t: a.name, k: a.k }; }
+  const n = ['pv:', 'f:', 'w:'].map((p) => nodes.get(p + itemKey(it))).find((x) => x && !x.leaving);
+  let src = null;
+  if (n) { const p = place(n), c = n.cur, ww = c.w * c.s, hh = c.h * c.s; src = { x: p.x - ww / 2, y: p.y - hh / 2, w: ww, h: hh }; }
+  const rec = { via: via || S.mode, concept: cfg.concept, app: w.app, title: w.t, keys: S.keys, ms: now() - S.openedAt, shown: S.shown };
+  const animate = !cfg.reduce && cfg.genie !== 'none' && S.shown;
+  if (animate && cfg.genie === 'card' && n) destroyNode(n);
+  S.wins = [w, ...S.wins.filter((x) => x.uid !== w.uid)];
+  renderDesktop();
+  if (animate) genie(w, cfg.genie === 'notch' || !src ? NOTCH_SRC : src);
+  else if (!cfg.reduce) swapFade();
+  S.log.unshift(rec);
+  S.log = S.log.slice(0, 6);
+  renderLog();
+  closePanel();
+}
+function openPanel(mode) {
+  if (S.open) return;
+  clearTimeout(S.timer);
+  const A = appsOrder(), L = flatList();
+  Object.assign(S, { open: true, mode, query: '', openedAt: now(), keys: 1, fi: Math.min(1, L.length - 1), ai: Math.min(1, A.length - 1) });
+  S.wi = defaultWi(S.ai);
+  const delay = mode === 'hold' ? cfg.delay * slowF() : 0;
+  const show = () => { if (!S.open) return; S.shown = true; S.justOpened = true; S.measure = now(); sync(); };
+  if (delay > 0) { S.shown = false; S.timer = setTimeout(show, delay); chrome(); }
+  else show();
+}
+function closePanel() {
+  clearTimeout(S.timer);
+  Object.assign(S, { open: false, shown: false, mode: null, query: '', measure: 0 });
+  sync();
+}
+function applyPick(p) {
+  if ('fi' in p) { if (S.fi === p.fi) return false; S.fi = p.fi; return true; }
+  const wi = p.wi != null ? p.wi : S.ai === p.ai ? S.wi : defaultWi(p.ai);
+  if (S.ai === p.ai && S.wi === wi) return false;
+  S.ai = p.ai; S.wi = wi;
+  return true;
+}
+function nav(dir, axis) {
+  if (isFlat()) {
+    if (axis === 'h') S.fi = clamp(S.fi + dir, 0, Math.max(0, flatList().length - 1));
+  } else {
+    const A = appsOrder();
+    if (cfg.concept === 'loupe' && axis === 'h') {
+      const L = linearList(), j = clamp(linIndex() + dir, 0, L.length - 1);
+      S.ai = L[j].ai; S.wi = L[j].wi;
+    } else if (axis === 'h' || cfg.concept === 'loupe') {
+      S.ai = clamp(S.ai + dir, 0, A.length - 1);
+      S.wi = cfg.concept === 'loupe' ? 0 : defaultWi(S.ai);
+    } else {
+      S.wi = clamp(S.wi + dir, 0, winsOf(A[S.ai]).length - 1);
+    }
+  }
+  sync();
+}
+function cycle(dir) {
+  if (isFlat()) { const n = flatList().length; if (n) S.fi = (S.fi + dir + n) % n; }
+  else { const n = appsOrder().length; S.ai = (S.ai + dir + n) % n; S.wi = defaultWi(S.ai); }
+  sync();
+}
+function onQuery() { S.fi = 0; sync(); }
+function escape() { if (S.query) { S.query = ''; S.fi = Math.min(1, flatList().length - 1); sync(); } else closePanel(); }
+function setConcept(c) {
+  if (cfg.concept === c && !S.open) return;
+  cfg.concept = c; save();
+  document.querySelectorAll('input[name="concept"]').forEach((el) => { el.checked = el.value === c; });
+  clearTimeout(S.timer);
+  Object.assign(S, { open: false, shown: false, mode: null, query: '' });
+  destroyAll();
+  chrome();
+  setTimeout(() => openPanel('tap'), 60);
+}
+
+/* ---------- keyboard ---------- */
+function onDown(e) {
+  const k = e.key, c = e.code || '';
+  if (k === 'Alt') return;
+  if (k === 'Tab' && e.altKey) {
+    e.preventDefault();
+    if (!S.open) { openPanel('hold'); return; }
+    S.keys++; cycle(e.shiftKey ? -1 : 1);
+    return;
+  }
+  if (c === 'Space' && (e.altKey || !S.open)) { e.preventDefault(); if (!S.open) openPanel('tap'); else closePanel(); return; }
+  if (!S.open) {
+    const m = /^Digit([1-3])$/.exec(c);
+    if (m && !e.metaKey && !e.ctrlKey) { e.preventDefault(); setConcept(['columns', 'axle', 'loupe'][+m[1] - 1]); }
+    return;
+  }
+  let handled = true;
+  switch (k) {
+    case 'ArrowLeft': case 'ArrowRight': S.keys++; nav(k === 'ArrowLeft' ? -1 : 1, 'h'); break;
+    case 'ArrowUp': case 'ArrowDown': S.keys++; nav(k === 'ArrowUp' ? -1 : 1, 'v'); break;
+    case 'Enter': S.keys++; commit(); break;
+    case 'Escape': S.keys++; escape(); break;
+    case 'Backspace': if (S.query) { S.keys++; S.query = e.altKey || e.metaKey ? '' : S.query.slice(0, -1); onQuery(); } break;
+    default: handled = false;
+  }
+  if (!handled && S.mode === 'tap' && !e.metaKey && !e.ctrlKey) {
+    let ch = null;
+    if (/^Key[A-Z]$/.test(c)) ch = c.slice(3).toLowerCase();
+    else if (/^Digit[0-9]$/.test(c)) ch = c.slice(5);
+    else if (c === 'Space' && S.query) ch = ' ';
+    else if (c === 'Period' || c === 'Minus') ch = c === 'Period' ? '.' : '-';
+    if (ch) { S.keys++; S.query += ch; onQuery(); handled = true; }
+  }
+  if (handled) e.preventDefault();
+}
+function onUp(e) {
+  if (e.key !== 'Alt') return;
+  if (S.latch && !e.synthetic) return;
+  if (S.open && S.mode === 'hold') commit();
+}
+vp.addEventListener('keydown', onDown);
+vp.addEventListener('keyup', onUp);
+vp.addEventListener('focus', chrome);
+vp.addEventListener('blur', () => {
+  if (S.open && S.mode === 'hold') closePanel();
+  if (S.latch) { S.latch = false; syncLatch(); }
+  chrome();
+});
+let wasFocused = false;
+vp.addEventListener('mousedown', () => { wasFocused = document.activeElement === vp; });
+vp.addEventListener('click', (e) => {
+  if (e.target.closest('.nd')) return;
+  if (wasFocused && S.open) closePanel();
+  vp.focus({ preventScroll: true });
+});
+
+/* ---------- on-screen keys ---------- */
+const pad = $('#pad'), altCap = pad.querySelector('[data-k="Alt"]');
+function syncLatch() { altCap.setAttribute('aria-pressed', S.latch ? 'true' : 'false'); }
+const fake = (key, code, alt) => ({ key, code, altKey: !!alt, shiftKey: false, metaKey: false, ctrlKey: false, preventDefault() {} });
+const PADMAP = { Tab: ['Tab', 'Tab'], Space: [' ', 'Space'], ArrowLeft: ['ArrowLeft', 'ArrowLeft'], ArrowRight: ['ArrowRight', 'ArrowRight'],
+  ArrowUp: ['ArrowUp', 'ArrowUp'], ArrowDown: ['ArrowDown', 'ArrowDown'], Enter: ['Enter', 'Enter'], Escape: ['Escape', 'Escape'] };
+pad.addEventListener('mousedown', (e) => { if (e.target.closest('button')) e.preventDefault(); });
+pad.addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-k]');
+  if (!b) return;
+  if (document.activeElement !== vp) vp.focus({ preventScroll: true });
+  const k = b.dataset.k;
+  if (k === 'Alt') {
+    S.latch = !S.latch; syncLatch();
+    if (!S.latch) onUp({ key: 'Alt', synthetic: true });
+    chrome();
+    return;
+  }
+  const [key, code] = PADMAP[k];
+  onDown(fake(key, code, S.latch));
+});
+
+/* ---------- knobs ---------- */
+const FMT = { speed: (v) => v, bounce: (v) => v + '%', stagger: (v) => v + ' ms', delay: (v) => v + ' ms', flatMax: (v) => (v === 0 ? 'never' : v + ' windows') };
+function applyCfg() {
+  gooL.classList.toggle('goo', !cfg.reduce);
+  screenEl.classList.toggle('day', cfg.wall === 'day');
+  screenEl.classList.toggle('dusk', cfg.wall !== 'day');
+  notch.classList.toggle('virtual', cfg.display === 'external');
+  if (S.open && S.shown) sync();
+}
+Object.keys(FMT).forEach((id) => {
+  const el = $('#' + id), out = $('#o-' + id);
+  el.value = cfg[id];
+  out.textContent = FMT[id](cfg[id]);
+  el.addEventListener('input', () => { cfg[id] = +el.value; out.textContent = FMT[id](cfg[id]); save(); applyCfg(); });
+});
+['slow', 'reduce'].forEach((id) => {
+  const el = $('#' + id);
+  el.checked = !!cfg[id];
+  el.addEventListener('change', () => { cfg[id] = el.checked; save(); applyCfg(); });
+});
+['genie', 'display', 'wall', 'scen', 'concept'].forEach((name) => {
+  document.querySelectorAll(`input[name="${name}"]`).forEach((el) => {
+    el.checked = el.value === cfg[name];
+    el.addEventListener('change', () => {
+      if (!el.checked) return;
+      if (name === 'concept') { setConcept(el.value); return; }
+      cfg[name] = el.value; save();
+      if (name === 'scen') { applyScenario(); setTimeout(() => openPanel('tap'), 60); }
+      else applyCfg();
+    });
+  });
+});
+$('#replay').addEventListener('click', () => {
+  vp.focus({ preventScroll: true });
+  if (S.open) { closePanel(); setTimeout(() => openPanel('tap'), 380 * slowF()); }
+  else openPanel('tap');
+});
+function applyScenario() {
+  clearTimeout(S.timer);
+  destroyAll();
+  Object.assign(S, { open: false, shown: false, mode: null, query: '' });
+  S.wins = SCEN[cfg.scen].map(([app, t], i) => ({ uid: 'w' + i, app, t, k: APPS[app].k }));
+  renderDesktop();
+  chrome();
+}
+
+const fit = () => { screenEl.style.transform = `scale(${vp.clientWidth / W})`; };
+new ResizeObserver(fit).observe(vp);
+fit();
+applyCfg();
+applyScenario();
+renderLog();
+setTimeout(() => { if (!S.open) openPanel('tap'); }, 450);
+})();
+</script>

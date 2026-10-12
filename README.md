@@ -1,0 +1,18 @@
+# Axle
+
+*Working name.*
+
+A keyboard-driven navigator for macOS, anchored at the MacBook notch. One view shows your workspaces (saved window layouts) and the windows inside them. You can get to any of them in a few keystrokes, and snap, send or close windows from the same view.
+
+**Status:** specification and browser prototypes. No app code yet.
+
+## Contents
+
+| Path | What it is |
+|---|---|
+| [`docs/SPEC.md`](docs/SPEC.md) | Product and technical specification, open questions and decision log |
+| [`prototypes/`](prototypes/) | Interactive HTML prototypes. Open any file in a browser, click the simulated screen, then press ⌥ Space. |
+
+## Next step
+
+Technical spikes in Swift (window listing, arranging, window images, the notch panel). See [section 10 of the spec](docs/SPEC.md#10-technical-risks-and-spikes).

@@ -2,7 +2,7 @@
 
 *Working name.*
 
-A keyboard-driven navigator for macOS, anchored at the MacBook notch. One view shows your workspaces (saved window layouts) and the windows inside them. You can get to any of them in a few keystrokes, and snap, send or close windows from the same view.
+A better Cmd-Tab and window manager for macOS, driven from the keyboard. One view shows your workspaces (saved window layouts) and the windows inside them. You can get to any of them in a few keystrokes, and snap, send or close windows from the same view. The interface appears at the MacBook notch.
 
 **Status:** specification and browser prototypes. No app code yet.
 

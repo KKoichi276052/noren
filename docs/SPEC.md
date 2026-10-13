@@ -1,13 +1,13 @@
-# Axle — Specification
+# Noren — Specification
 
-> **Axle is a working name** (see [open question Q2](#14-open-questions)).
+> **Noren (暖簾) is a working name** (see [open question Q2](#14-open-questions)). Earlier drafts and prototypes used "Axle"; in this document Axle now only names the ring-based design concept.
 > Status: **Draft 0.1** · Last updated: 2026-10-13 · Current prototype: [`prototypes/03-axle-workspaces.html`](../prototypes/03-axle-workspaces.html)
 >
 > Sections are marked where they record a decision the owner made (**Decided**) versus a direction proposed during prototyping that still needs confirmation (**Proposed**). See the [decision log](#15-decision-log).
 
 ## 1. Summary
 
-Axle is **a better Cmd-Tab and window manager for macOS**, driven from the keyboard. One view shows your **workspaces** (saved window layouts) and the **windows** inside them, and gets you to any of them in a few keystrokes. From the same view you can arrange windows: snap one to half the screen, send it to another workspace, or close it.
+Noren is **a better Cmd-Tab and window manager for macOS**, driven from the keyboard. One view shows your **workspaces** (saved window layouts) and the **windows** inside them, and gets you to any of them in a few keystrokes. From the same view you can arrange windows: snap one to half the screen, send it to another workspace, or close it.
 
 It replaces Cmd-Tab for switching windows and Mission Control for seeing where things are.
 
@@ -375,7 +375,7 @@ Based on product pages and general knowledge as of October 2026. Verify before u
 | ID | Question |
 |---|---|
 | Q1 | What is the minimum macOS version? |
-| Q2 | What is the app's name? Working name: Axle. Leading candidates: **Fusuma** (襖, sliding panels between rooms: fits switching and arranging) and **Noren** (暖簾, the curtain you glance through into the next space: fits switching). Ruled out: Atoll (an existing notch app on GitHub), Halo, Orbit, Iris, Bezel, Mise, Aperture, Eclipse. Name availability not yet checked. |
+| Q2 | What is the app's final name? Working name: **Noren** (暖簾, the curtain you glance through into the next space). Alternative kept open: **Fusuma** (襖, sliding panels between rooms: fits switching and arranging). Ruled out: Atoll (an existing notch app on GitHub), Halo, Orbit, Iris, Bezel, Mise, Aperture, Eclipse. Name availability not yet checked. |
 | Q3 | When you move a window yourself, outside the app, should its workspace update automatically, or only when you save? |
 | Q4 | Workspaces across several displays: one layout per display, or one workspace spanning displays? |
 | Q5 | Does a newly opened window join the active workspace automatically? |
@@ -403,7 +403,8 @@ Based on product pages and general knowledge as of October 2026. Verify before u
 | 2026-10-12 | Next build step: technical spikes in Swift | Decided; scheduled for a later session |
 | 2026-10-13 | Search bar under the notch, stretched out of the selected island; no permanent search field | Proposed |
 | 2026-10-13 | The product is a better Cmd-Tab and window manager; the notch is where it appears, not its identity. Naming no longer needs to reference the notch or the ring. | Decided |
-| 2026-10-13 | Name shortlist: Fusuma and Noren | Decided (final choice open) |
+| 2026-10-13 | Name shortlist: Fusuma and Noren | Decided |
+| 2026-10-13 | Noren becomes the working name (repository: `noren`); final name still open | Decided |
 
 ## 16. Prototypes
 
